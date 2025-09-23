@@ -134,6 +134,17 @@ label {
     gap: 10px;
 }
 
+.test-notice {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 15px;
+    text-align: center;
+    font-size: 14px;
+    color: #856404;
+}
+
 /* Адаптивность для мобильных */
 @media (max-width: 480px) {
     body {
@@ -148,4 +159,5 @@ label {
         padding: 10px;
         font-size: 14px;
     }
+
 }
