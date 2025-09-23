@@ -219,6 +219,17 @@ label {
     max-width: 90%;
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     animation: slideUp 0.3s ease;
+    border: 2px solid #1e7e34;
+}
+
+.install-prompt .install-content {
+    text-align: center;
+}
+
+.install-prompt .install-content span {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 600;
 }
 
 .install-buttons {
@@ -258,7 +269,7 @@ label {
     }
 }
 
-/* Скрываем кнопку установки пока PWA не доступно */
+/* Убедимся, что кнопка установки видна только когда нужно */
 #installPwaBtn {
     display: none;
 }
@@ -301,4 +312,50 @@ label {
         padding: 8px;
         font-size: 13px;
     }
+    
+    .install-buttons {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .install-btn-primary,
+    .install-btn-secondary {
+        width: 100%;
+    }
+}
+
+/* Дополнительные улучшения для PWA */
+@media (display-mode: standalone) {
+    body {
+        padding: 15px;
+    }
+    
+    .container {
+        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    }
+    
+    .test-notice {
+        background: #e7f3ff;
+        border-color: #b3d9ff;
+        color: #0066cc;
+    }
+}
+
+/* Улучшение скроллбара для лога */
+#dataLog::-webkit-scrollbar {
+    width: 6px;
+}
+
+#dataLog::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+#dataLog::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+#dataLog::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
 }
