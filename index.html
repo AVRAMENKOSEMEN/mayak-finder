@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mayak Finder</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon.png">
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Mayak Finder</h1>
+        
+        <!-- Кнопка подключения Bluetooth -->
+        <button id="connectBtn" class="btn primary">📡 Подключиться к Bluetooth</button>
+        
+        <!-- Статус подключения -->
+        <div id="status" class="status">Не подключено</div>
+        
+        <!-- Поле с координатами -->
+        <div class="coordinates">
+            <label>Последние координаты:</label>
+            <div id="coordinatesText">Ожидание данных...</div>
+        </div>
+        
+        <!-- Кнопки действий -->
+        <div class="actions">
+            <button id="copyBtn" class="btn secondary" disabled>📋 Копировать координаты</button>
+            <button id="openMapsBtn" class="btn secondary" disabled>🗺️ Открыть в Картах</button>
+            <button id="findBtn" class="btn danger" disabled>🔦 FIND! (Включить свет)</button>
+        </div>
+        
+        <!-- Мини-карта -->
+        <div class="map-container">
+            <label>Текущее положение маяка:</label>
+            <div id="map" class="map">Карта загружается...</div>
+        </div>
+        
+        <!-- Лог данных -->
+        <div class="log">
+            <label>Лог данных:</label>
+            <div id="dataLog"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
