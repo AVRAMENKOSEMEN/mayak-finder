@@ -6,16 +6,14 @@
     <title>Mayak Finder</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" href="icon.png">
 </head>
 <body>
     <div class="container">
         <h1>🔍 Mayak Finder</h1>
-
-        <!-- Добавьте этот блок после <h1> -->
-<div class="test-notice">
-    <strong>Тестовый режим:</strong> Используются фиктивные координаты (55.241867, 72.908588)
-</div>
+        
+        <div class="test-notice">
+            <strong>Тестовый режим:</strong> Используются фиктивные координаты для демонстрации
+        </div>
         
         <!-- Кнопка подключения Bluetooth -->
         <button id="connectBtn" class="btn primary">📡 Подключиться к Bluetooth</button>
@@ -34,12 +32,20 @@
             <button id="copyBtn" class="btn secondary" disabled>📋 Копировать координаты</button>
             <button id="openMapsBtn" class="btn secondary" disabled>🗺️ Открыть в Картах</button>
             <button id="findBtn" class="btn danger" disabled>🔦 FIND! (Включить свет)</button>
+            <button id="testBtn" class="btn secondary">🧪 Тест: Имитация данных</button>
         </div>
         
         <!-- Мини-карта -->
         <div class="map-container">
             <label>Текущее положение маяка:</label>
-            <div id="map" class="map">Карта загружается...</div>
+            <div id="map" class="map">
+                <div id="staticMap">
+                    <div class="map-placeholder">
+                        <div class="map-icon">🗺️</div>
+                        <div class="map-text">Карта будет загружена после получения координат</div>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <!-- Лог данных -->
@@ -51,5 +57,4 @@
 
     <script src="script.js"></script>
 </body>
-
 </html>
