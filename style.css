@@ -37,6 +37,14 @@ h1 {
     color: #856404;
 }
 
+.pwa-install-btn {
+    background: #28a745 !important;
+    color: white !important;
+    padding: 8px 15px !important;
+    font-size: 12px !important;
+    margin-top: 5px !important;
+}
+
 .btn {
     width: 100%;
     padding: 12px;
@@ -196,6 +204,65 @@ label {
     gap: 10px;
 }
 
+/* Стили для PWA уведомления */
+.install-prompt {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #28a745;
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    z-index: 1000;
+    max-width: 90%;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    animation: slideUp 0.3s ease;
+}
+
+.install-buttons {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.install-btn-primary {
+    background: white;
+    color: #28a745;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.install-btn-secondary {
+    background: transparent;
+    color: white;
+    border: 1px solid white;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+@keyframes slideUp {
+    from { 
+        transform: translateX(-50%) translateY(100px); 
+        opacity: 0; 
+    }
+    to { 
+        transform: translateX(-50%) translateY(0); 
+        opacity: 1; 
+    }
+}
+
+/* Скрываем кнопку установки пока PWA не доступно */
+#installPwaBtn {
+    display: none;
+}
+
 /* Адаптивность для мобильных */
 @media (max-width: 480px) {
     body {
@@ -213,5 +280,25 @@ label {
     
     .map {
         height: 180px;
+    }
+    
+    .install-prompt {
+        bottom: 10px;
+        padding: 12px;
+    }
+}
+
+@media (max-width: 360px) {
+    .container {
+        padding: 10px;
+    }
+    
+    h1 {
+        font-size: 1.5em;
+    }
+    
+    .btn {
+        padding: 8px;
+        font-size: 13px;
     }
 }
