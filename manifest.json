@@ -2,8 +2,8 @@
   "name": "Mayak Finder",
   "short_name": "MayakFinder",
   "description": "Приложение для поиска маяка по Bluetooth",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "/mayak-finder/",
+  "scope": "/mayak-finder/",
   "display": "standalone",
   "background_color": "#667eea",
   "theme_color": "#764ba2",
@@ -13,13 +13,13 @@
       "src": "https://img.icons8.com/fluency/192/000000/bluetooth.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "https://img.icons8.com/fluency/512/000000/bluetooth.png",
-      "sizes": "512x512", 
+      "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
   "categories": ["navigation", "utilities"],
