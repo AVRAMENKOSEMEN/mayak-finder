@@ -26,6 +26,17 @@ h1 {
     color: #333;
 }
 
+.test-notice {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 15px;
+    text-align: center;
+    font-size: 14px;
+    color: #856404;
+}
+
 .btn {
     width: 100%;
     padding: 12px;
@@ -49,7 +60,7 @@ h1 {
 }
 
 .btn.secondary {
-    background: #28a745;
+    background: #6c757d;
     color: white;
 }
 
@@ -83,6 +94,18 @@ h1 {
     border: 1px solid #f5c6cb;
 }
 
+.status.connecting {
+    background: #cce7ff;
+    color: #004085;
+    border: 1px solid #b3d7ff;
+}
+
+.status.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
 .coordinates, .map-container, .log {
     margin: 15px 0;
     padding: 15px;
@@ -111,10 +134,49 @@ label {
     background: #f8f9fa;
     border-radius: 5px;
     margin-top: 10px;
+    overflow: hidden;
+}
+
+#staticMap {
+    width: 100%;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.map-placeholder {
+    text-align: center;
     color: #666;
+}
+
+.map-icon {
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
+.map-text {
+    font-size: 14px;
+}
+
+.map-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    text-align: center;
+}
+
+.coordinates-display {
+    background: white;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 5px 0;
+    font-family: monospace;
+    font-size: 14px;
 }
 
 #dataLog {
@@ -134,17 +196,6 @@ label {
     gap: 10px;
 }
 
-.test-notice {
-    background: #fff3cd;
-    border: 1px solid #ffeaa7;
-    border-radius: 5px;
-    padding: 10px;
-    margin-bottom: 15px;
-    text-align: center;
-    font-size: 14px;
-    color: #856404;
-}
-
 /* Адаптивность для мобильных */
 @media (max-width: 480px) {
     body {
@@ -159,5 +210,8 @@ label {
         padding: 10px;
         font-size: 14px;
     }
-
+    
+    .map {
+        height: 180px;
+    }
 }
