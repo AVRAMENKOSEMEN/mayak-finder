@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -8,8 +9,7 @@
     
     <!-- PWA метатеги -->
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" href="https://img.icons8.com/fluency/48/000000/bluetooth.png">
-    <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/180/000000/bluetooth.png">
+    <link rel="icon" href="https://img.icons8.com/fluency/48/000000/bluetooth.png">
     
     <link rel="stylesheet" href="style.css">
 </head>
@@ -19,21 +19,24 @@
         
         <div class="test-notice">
             <strong>PWA-приложение:</strong> Установите на телефон для быстрого доступа
-            <button id="installPwaBtn" class="btn secondary" style="margin-top: 5px; padding: 5px 10px; font-size: 12px;">
+            <button id="installPwaBtn" class="btn pwa-install-btn">
                 📲 Установить приложение
             </button>
         </div>
         
-        <!-- Остальной интерфейс без изменений -->
+        <!-- Кнопка подключения Bluetooth -->
         <button id="connectBtn" class="btn primary">📡 Подключиться к Bluetooth</button>
         
+        <!-- Статус подключения -->
         <div id="status" class="status">Не подключено</div>
         
+        <!-- Поле с координатами -->
         <div class="coordinates">
             <label>Последние координаты:</label>
             <div id="coordinatesText">Ожидание данных...</div>
         </div>
         
+        <!-- Кнопки действий -->
         <div class="actions">
             <button id="copyBtn" class="btn secondary" disabled>📋 Копировать координаты</button>
             <button id="openMapsBtn" class="btn secondary" disabled>🗺️ Открыть в Картах</button>
@@ -41,6 +44,7 @@
             <button id="testBtn" class="btn secondary">🧪 Тест: Имитация данных</button>
         </div>
         
+        <!-- Мини-карта -->
         <div class="map-container">
             <label>Текущее положение маяка:</label>
             <div id="map" class="map">
@@ -53,6 +57,7 @@
             </div>
         </div>
         
+        <!-- Лог данных -->
         <div class="log">
             <label>Лог данных:</label>
             <div id="dataLog"></div>
@@ -60,15 +65,16 @@
     </div>
 
     <!-- PWA установка -->
-    <div id="installPrompt" style="display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #28a745; color: white; padding: 15px; border-radius: 10px; z-index: 1000; max-width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
-        <span>Установите это приложение на свой телефон!</span>
-        <div style="margin-top: 10px;">
-            <button id="installBtn" style="background: white; color: #28a745; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-right: 10px;">Установить</button>
-            <button id="dismissBtn" style="background: transparent; color: white; border: 1px solid white; padding: 8px 15px; border-radius: 5px; cursor: pointer;">Позже</button>
+    <div id="installPrompt" class="install-prompt">
+        <div class="install-content">
+            <span>📲 Установите это приложение на свой телефон!</span>
+            <div class="install-buttons">
+                <button id="installBtn" class="install-btn-primary">Установить</button>
+                <button id="dismissBtn" class="install-btn-secondary">Позже</button>
+            </div>
         </div>
     </div>
 
     <script src="script.js"></script>
 </body>
 </html>
-
