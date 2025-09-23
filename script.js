@@ -9,13 +9,11 @@ class MayakFinder {
         this.latitude = 55.241867942983404;
         this.longitude = 72.90858878021125;
         
-        this.map = null;
-        this.marker = null;
         this.isConnected = false;
         
         this.initializeElements();
         this.setupEventListeners();
-        this.initializeTestData(); // Инициализация тестовых данных
+        this.initializeTestData();
     }
     
     initializeElements() {
@@ -25,7 +23,9 @@ class MayakFinder {
         this.copyBtn = document.getElementById('copyBtn');
         this.openMapsBtn = document.getElementById('openMapsBtn');
         this.findBtn = document.getElementById('findBtn');
+        this.testBtn = document.getElementById('testBtn');
         this.mapDiv = document.getElementById('map');
+        this.staticMap = document.getElementById('staticMap');
         this.dataLog = document.getElementById('dataLog');
     }
     
@@ -34,33 +34,23 @@ class MayakFinder {
         this.copyBtn.addEventListener('click', () => this.copyCoordinates());
         this.openMapsBtn.addEventListener('click', () => this.openInMaps());
         this.findBtn.addEventListener('click', () => this.sendFindCommand());
-        
-        // Добавляем кнопку для тестовых данных
-        const testBtn = document.createElement('button');
-        testBtn.textContent = '🧪 Тест: Имитация данных с маяка';
-        testBtn.className = 'btn secondary';
-        testBtn.addEventListener('click', () => this.simulateMayakData());
-        document.querySelector('.actions').appendChild(testBtn);
+        this.testBtn.addEventListener('click', () => this.simulateMayakData());
     }
     
-    // Инициализация тестовых данных при загрузке
     initializeTestData() {
         this.log('Приложение загружено. Используются тестовые координаты.');
         this.updateCoordinates();
         this.updateMap();
-        this.setButtonsState(true); // Разблокируем кнопки для тестирования
-        
-        // Показываем тестовый статус
+        this.setButtonsState(true);
         this.updateStatus('Тестовый режим (фиктивные данные)', 'connected');
     }
     
-    // Имитация получения данных с маяка
     simulateMayakData() {
         const testCoordinates = [
             { lat: 55.241867942983404, lon: 72.90858878021125, name: "Основная позиция" },
             { lat: 55.2420, lon: 72.9090, name: "Смещение +10м" },
             { lat: 55.2415, lon: 72.9080, name: "Смещение -10м" },
-            { lat: 55.2419, lon: 72.9089, name: "Текущее положение" }
+            { lat: 55.2418, lon: 72.9085, name: "Текущее положение" }
         ];
         
         const randomCoord = testCoordinates[Math.floor(Math.random() * testCoordinates.length)];
@@ -68,9 +58,8 @@ class MayakFinder {
         this.latitude = randomCoord.lat;
         this.longitude = randomCoord.lon;
         
-        // Имитируем получение данных по Bluetooth
-        this.log(`[ИМИТАЦИЯ] Получены координаты: ${randomCoord.name}`);
-        this.log(`[ИМИТАЦИЯ] GPS:${this.latitude},${this.longitude}`);
+        this.log(`[ТЕСТ] Получены координаты: ${randomCoord.name}`);
+        this.log(`[ТЕСТ] GPS:${this.latitude},${this.longitude}`);
         
         this.updateCoordinates();
         this.updateMap();
@@ -86,17 +75,15 @@ class MayakFinder {
                 return;
             }
             
-            // UUID для Nordic UART Service (NUS)
             const UART_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
             const TX_CHARACTERISTIC_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
             const RX_CHARACTERISTIC_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
             
-            // Запрашиваем устройство с UART сервисом
             this.device = await navigator.bluetooth.requestDevice({
                 filters: [
                     { name: 'My nRF52 Beacon' },
                     { namePrefix: 'nRF52' },
-                    { services: [UART_SERVICE_UUID] } // Фильтр по сервису
+                    { services: [UART_SERVICE_UUID] }
                 ],
                 optionalServices: [UART_SERVICE_UUID]
             });
@@ -111,14 +98,11 @@ class MayakFinder {
             const server = await this.device.gatt.connect();
             this.server = server;
             
-            // Получаем UART сервис
             const service = await server.getPrimaryService(UART_SERVICE_UUID);
             
-            // Получаем характеристики для приема (TX) и отправки (RX) данных
             this.txCharacteristic = await service.getCharacteristic(TX_CHARACTERISTIC_UUID);
             this.rxCharacteristic = await service.getCharacteristic(RX_CHARACTERISTIC_UUID);
             
-            // Подписываемся на получение данных
             await this.txCharacteristic.startNotifications();
             this.txCharacteristic.addEventListener('characteristicvaluechanged', 
                 (event) => this.handleDataReceived(event));
@@ -131,8 +115,6 @@ class MayakFinder {
         } catch (error) {
             this.log(`Ошибка подключения: ${error}`);
             this.updateStatus('Ошибка подключения', 'error');
-            
-            // Если подключение не удалось, остаемся в тестовом режиме
             this.log('Остаюсь в тестовом режиме с фиктивными координатами');
             this.updateStatus('Тестовый режим (Bluetooth недоступен)', 'connected');
         }
@@ -145,7 +127,6 @@ class MayakFinder {
         
         this.log(`Получено с маяка: ${data}`);
         
-        // Парсим координаты из формата "GPS:55.75,37.61"
         if (data.startsWith('GPS:')) {
             const coords = data.replace('GPS:', '').split(',');
             if (coords.length === 2) {
@@ -166,23 +147,21 @@ class MayakFinder {
     updateMap() {
         if (!this.latitude || !this.longitude) return;
         
-        // Простая мини-карта с OpenStreetMap
-        const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${this.longitude-0.001},${this.latitude-0.001},${this.longitude+0.001},${this.latitude+0.001}&marker=${this.latitude},${this.longitude}&layer=mapnik`;
-        
-        this.mapDiv.innerHTML = `
-            <iframe 
-                width="100%" 
-                height="100%" 
-                frameborder="0" 
-                scrolling="no" 
-                marginheight="0" 
-                marginwidth="0" 
-                src="${mapUrl}"
-                style="border-radius: 5px;"
-                title="Карта с координатами маяка">
-            </iframe>
-            <div style="text-align: center; margin-top: 5px; font-size: 12px; color: #666;">
-                Координаты: ${this.latitude.toFixed(6)}, ${this.longitude.toFixed(6)}
+        this.staticMap.innerHTML = `
+            <div class="map-content">
+                <div style="font-size: 36px; margin-bottom: 10px;">📍</div>
+                <div style="font-weight: bold; margin-bottom: 15px; color: #333;">Положение маяка</div>
+                
+                <div class="coordinates-display">
+                    <div>Широта: <strong>${this.latitude.toFixed(6)}</strong></div>
+                    <div>Долгота: <strong>${this.longitude.toFixed(6)}</strong></div>
+                </div>
+                
+                <button onclick="window.open('https://yandex.ru/maps/?pt=${this.longitude},${this.latitude}&z=17', '_blank')" 
+                        class="btn secondary" 
+                        style="margin-top: 15px; padding: 8px 15px; font-size: 14px;">
+                    🗺️ Открыть интерактивную карту
+                </button>
             </div>
         `;
     }
@@ -191,6 +170,7 @@ class MayakFinder {
         if (!this.isConnected) {
             this.log('[ТЕСТ] Команда FIND отправлена (имитация)');
             this.log('[ТЕСТ] Свет и звук на маяке должны включиться');
+            alert('[ТЕСТ] Команда FIND отправлена! Свет и звук включены (имитация)');
             return;
         }
         
@@ -216,14 +196,12 @@ class MayakFinder {
                 await navigator.clipboard.writeText(coords);
                 this.log('Координаты скопированы в буфер обмена');
                 
-                // Временное уведомление
                 const originalText = this.copyBtn.textContent;
                 this.copyBtn.textContent = '✅ Скопировано!';
                 setTimeout(() => {
                     this.copyBtn.textContent = originalText;
                 }, 2000);
             } catch (error) {
-                // Fallback для старых браузеров
                 const textArea = document.createElement('textarea');
                 textArea.value = coords;
                 document.body.appendChild(textArea);
@@ -237,17 +215,14 @@ class MayakFinder {
     
     openInMaps() {
         if (this.latitude && this.longitude) {
-            // Предлагаем выбор карт
             const choice = confirm('Открыть в Google Картах (OK) или Яндекс Картах (Отмена)?');
             
             if (choice) {
-                // Google Карты
                 const googleUrl = `https://www.google.com/maps/search/?api=1&query=${this.latitude},${this.longitude}`;
                 window.open(googleUrl, '_blank');
                 this.log('Открываю в Google Картах');
             } else {
-                // Яндекс Карты
-                const yandexUrl = `https://yandex.ru/maps/?pt=${this.longitude},${this.latitude}&z=17`;
+                const yandexUrl = `https://yandex.ru/maps/?pt=${this.longitude},${this.longitude}&z=17`;
                 window.open(yandexUrl, '_blank');
                 this.log('Открываю в Яндекс Картах');
             }
@@ -283,7 +258,7 @@ class MayakFinder {
     }
 }
 
-// Инициализация приложения когда страница загрузится
+// Инициализация приложения
 document.addEventListener('DOMContentLoaded', () => {
     new MayakFinder();
 });
