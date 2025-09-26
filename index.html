@@ -6,11 +6,8 @@
     <title>Mayak Finder</title>
     <meta name="theme-color" content="#667eea">
     <meta name="description" content="Приложение для поиска маяка по Bluetooth">
-    
-    <!-- PWA метатеги -->
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="https://img.icons8.com/fluency/48/000000/bluetooth.png">
-    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -18,45 +15,30 @@
         <h1>🔍 Mayak Finder</h1>
         
         <div class="test-notice">
-            <strong>PWA-приложение:</strong> Установите на телефон для быстрого доступа
-            <button id="installPwaBtn" class="btn pwa-install-btn">
-                📲 Установить приложение
-            </button>
+            <strong>Тестовый режим:</strong> Используются фиктивные координаты
         </div>
         
-        <!-- Кнопка подключения Bluetooth -->
         <button id="connectBtn" class="btn primary">📡 Подключиться к Bluetooth</button>
         
-        <!-- Статус подключения -->
         <div id="status" class="status">Не подключено</div>
         
-        <!-- Поле с координатами -->
         <div class="coordinates">
             <label>Последние координаты:</label>
             <div id="coordinatesText">Ожидание данных...</div>
         </div>
         
-        <!-- Кнопки действий -->
         <div class="actions">
             <button id="copyBtn" class="btn secondary" disabled>📋 Копировать координаты</button>
             <button id="openMapsBtn" class="btn secondary" disabled>🗺️ Открыть в Картах</button>
             
-            <!-- Кнопки управления светом -->
             <div class="light-controls">
                 <button id="lightOnBtn" class="btn success" disabled>💡 Включить свет</button>
                 <button id="lightOffBtn" class="btn warning" disabled>🔌 Выключить свет</button>
             </div>
             
-            <button id="testBtn" class="btn secondary">🧪 Тест: Имитация данных</button>
+            <button id="testBtn" class="btn secondary">🧪 Тест: Новые координаты</button>
         </div>
-        
-        <!-- Статус света -->
-        <div id="lightStatus" class="light-status">
-            <label>Статус маяка:</label>
-            <div id="lightStatusText">Неизвестно</div>
-        </div>
-        
-        <!-- Мини-карта -->
+
         <div class="map-container">
             <label>Текущее положение маяка:</label>
             <div id="map" class="map">
@@ -69,21 +51,9 @@
             </div>
         </div>
         
-        <!-- Лог данных -->
         <div class="log">
             <label>Лог данных:</label>
             <div id="dataLog"></div>
-        </div>
-    </div>
-
-    <!-- PWA установка -->
-    <div id="installPrompt" class="install-prompt">
-        <div class="install-content">
-            <span>📲 Установите это приложение на свой телефон!</span>
-            <div class="install-buttons">
-                <button id="installBtn" class="install-btn-primary">Установить</button>
-                <button id="dismissBtn" class="install-btn-secondary">Позже</button>
-            </div>
         </div>
     </div>
 
