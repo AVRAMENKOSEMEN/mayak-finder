@@ -10,16 +10,16 @@ class MayakFinder {
         this.longitude = 72.90858878021125;
         
         this.isConnected = false;
+        this.isLightOn = false; // Статус света
         this.deferredPrompt = null;
         
         this.initializeElements();
         this.setupEventListeners();
         this.initializeTestData();
-        this.initializePWA(); // Инициализацию PWA делаем после загрузки DOM
+        this.initializePWA();
     }
     
     initializePWA() {
-        // Регистрируем Service Worker с задержкой
         setTimeout(() => {
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('./sw.js')
@@ -33,7 +33,6 @@ class MayakFinder {
             }
         }, 1000);
 
-        // Обработчик установки PWA
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             this.deferredPrompt = e;
@@ -41,7 +40,6 @@ class MayakFinder {
             this.log('PWA: Установка доступна');
         });
 
-        // Проверяем, запущено ли приложение как PWA
         if (window.matchMedia('(display-mode: standalone)').matches) {
             this.log('PWA: Запущено как приложение');
         }
@@ -66,7 +64,10 @@ class MayakFinder {
         this.coordinatesText = document.getElementById('coordinatesText');
         this.copyBtn = document.getElementById('copyBtn');
         this.openMapsBtn = document.getElementById('openMapsBtn');
-        this.findBtn = document.getElementById('findBtn');
+        this.lightOnBtn = document.getElementById('lightOnBtn');
+        this.lightOffBtn = document.getElementById('lightOffBtn');
+        this.lightStatusDiv = document.getElementById('lightStatus');
+        this.lightStatusText = document.getElementById('lightStatusText');
         this.testBtn = document.getElementById('testBtn');
         this.staticMap = document.getElementById('staticMap');
         this.dataLog = document.getElementById('dataLog');
@@ -76,7 +77,8 @@ class MayakFinder {
         if (this.connectBtn) this.connectBtn.addEventListener('click', () => this.connectToDevice());
         if (this.copyBtn) this.copyBtn.addEventListener('click', () => this.copyCoordinates());
         if (this.openMapsBtn) this.openMapsBtn.addEventListener('click', () => this.openInMaps());
-        if (this.findBtn) this.findBtn.addEventListener('click', () => this.sendFindCommand());
+        if (this.lightOnBtn) this.lightOnBtn.addEventListener('click', () => this.turnLightOn());
+        if (this.lightOffBtn) this.lightOffBtn.addEventListener('click', () => this.turnLightOff());
         if (this.testBtn) this.testBtn.addEventListener('click', () => this.simulateMayakData());
         
         // PWA кнопки установки
@@ -107,7 +109,6 @@ class MayakFinder {
             }
         } else {
             this.log('PWA: Установка не доступна');
-            // Показываем ручную инструкцию
             alert('Для установки приложения:\n1. В меню браузера (три точки)\n2. Выберите "Добавить на главный экран"\n3. Нажмите "Добавить"');
         }
     }
@@ -116,6 +117,7 @@ class MayakFinder {
         this.log('Приложение загружено. Тестовый режим.');
         this.updateCoordinates();
         this.updateMap();
+        this.updateLightStatus('unknown', 'Статус неизвестен');
         this.setButtonsState(true);
         this.updateStatus('Тестовый режим', 'connected');
     }
@@ -179,6 +181,7 @@ class MayakFinder {
             this.log('Успешно подключено!');
             this.updateStatus('Подключено к маяку', 'connected');
             this.setButtonsState(true);
+            this.updateLightStatus('unknown', 'Ожидание данных с маяка');
             
         } catch (error) {
             this.log('Ошибка подключения: ' + error);
@@ -194,6 +197,7 @@ class MayakFinder {
             
             this.log(`Данные с маяка: ${data}`);
             
+            // Обработка координат
             if (data.startsWith('GPS:')) {
                 const coords = data.replace('GPS:', '').split(',');
                 if (coords.length === 2) {
@@ -202,8 +206,79 @@ class MayakFinder {
                     this.updateCoordinates();
                 }
             }
+            
+            // Обработка статуса света
+            if (data.startsWith('ACK:LED_ON')) {
+                this.isLightOn = true;
+                this.updateLightStatus('on', 'Свет ВКЛЮЧЕН 🔆');
+                this.log('Маяк подтвердил включение света');
+            }
+            
+            if (data.startsWith('ACK:LED_OFF')) {
+                this.isLightOn = false;
+                this.updateLightStatus('off', 'Свет ВЫКЛЮЧЕН ⚫');
+                this.log('Маяк подтвердил выключение света');
+            }
+            
         } catch (error) {
             this.log('Ошибка обработки данных: ' + error);
+        }
+    }
+    
+    async turnLightOn() {
+        if (!this.isConnected) {
+            this.log('[ТЕСТ] Команда LIGHT_ON отправлена');
+            this.isLightOn = true;
+            this.updateLightStatus('on', 'Свет ВКЛЮЧЕН (тест) 🔆');
+            alert('[ТЕСТ] Свет включен!');
+            return;
+        }
+        
+        if (!this.rxCharacteristic) {
+            this.log('Нет подключения к устройству');
+            return;
+        }
+        
+        try {
+            const encoder = new TextEncoder();
+            const data = encoder.encode('CMD:LED_ON');
+            await this.rxCharacteristic.writeValue(data);
+            this.log('Команда включения света отправлена');
+            this.updateLightStatus('unknown', 'Отправка команды...');
+        } catch (error) {
+            this.log('Ошибка отправки команды: ' + error);
+        }
+    }
+    
+    async turnLightOff() {
+        if (!this.isConnected) {
+            this.log('[ТЕСТ] Команда LIGHT_OFF отправлена');
+            this.isLightOn = false;
+            this.updateLightStatus('off', 'Свет ВЫКЛЮЧЕН (тест) ⚫');
+            alert('[ТЕСТ] Свет выключен!');
+            return;
+        }
+        
+        if (!this.rxCharacteristic) {
+            this.log('Нет подключения к устройству');
+            return;
+        }
+        
+        try {
+            const encoder = new TextEncoder();
+            const data = encoder.encode('CMD:LED_OFF');
+            await this.rxCharacteristic.writeValue(data);
+            this.log('Команда выключения света отправлена');
+            this.updateLightStatus('unknown', 'Отправка команды...');
+        } catch (error) {
+            this.log('Ошибка отправки команды: ' + error);
+        }
+    }
+    
+    updateLightStatus(status, message) {
+        if (this.lightStatusDiv && this.lightStatusText) {
+            this.lightStatusDiv.className = `light-status ${status}`;
+            this.lightStatusText.textContent = message;
         }
     }
     
@@ -237,28 +312,6 @@ class MayakFinder {
         `;
     }
     
-    async sendFindCommand() {
-        if (!this.isConnected) {
-            this.log('[ТЕСТ] Команда FIND отправлена');
-            alert('[ТЕСТ] Свет и звук включены!');
-            return;
-        }
-        
-        if (!this.rxCharacteristic) {
-            this.log('Нет подключения');
-            return;
-        }
-        
-        try {
-            const encoder = new TextEncoder();
-            const data = encoder.encode('FIND');
-            await this.rxCharacteristic.writeValue(data);
-            this.log('Команда отправлена');
-        } catch (error) {
-            this.log('Ошибка отправки: ' + error);
-        }
-    }
-    
     async copyCoordinates() {
         if (this.latitude && this.longitude) {
             const coords = `${this.latitude},${this.longitude}`;
@@ -274,7 +327,6 @@ class MayakFinder {
                     }, 2000);
                 }
             } catch (error) {
-                // Fallback
                 const textArea = document.createElement('textarea');
                 textArea.value = coords;
                 document.body.appendChild(textArea);
@@ -299,6 +351,7 @@ class MayakFinder {
         this.updateStatus('Отключено', 'disconnected');
         this.setButtonsState(false);
         this.isConnected = false;
+        this.updateLightStatus('unknown', 'Соединение потеряно');
     }
     
     updateStatus(message, type) {
@@ -311,7 +364,8 @@ class MayakFinder {
     setButtonsState(enabled) {
         if (this.copyBtn) this.copyBtn.disabled = !enabled;
         if (this.openMapsBtn) this.openMapsBtn.disabled = !enabled;
-        if (this.findBtn) this.findBtn.disabled = !enabled;
+        if (this.lightOnBtn) this.lightOnBtn.disabled = !enabled;
+        if (this.lightOffBtn) this.lightOffBtn.disabled = !enabled;
     }
     
     log(message) {
