@@ -72,6 +72,16 @@ h1 {
     color: white;
 }
 
+.btn.success {
+    background: #28a745;
+    color: white;
+}
+
+.btn.warning {
+    background: #ffc107;
+    color: #212529;
+}
+
 .btn.danger {
     background: #dc3545;
     color: white;
@@ -80,6 +90,52 @@ h1 {
 .btn:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* Контейнер для кнопок света */
+.light-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.light-controls .btn {
+    margin-bottom: 0;
+    flex: 1;
+}
+
+/* Статус света */
+.light-status {
+    margin: 15px 0;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+
+.light-status.on {
+    background: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.light-status.off {
+    background: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+.light-status.unknown {
+    background: #e2e3e5;
+    border-color: #d6d8db;
+    color: #383d41;
+}
+
+#lightStatusText {
+    font-weight: 600;
+    margin-top: 5px;
+    padding: 5px;
+    border-radius: 3px;
 }
 
 .status {
@@ -269,7 +325,6 @@ label {
     }
 }
 
-/* Убедимся, что кнопка установки видна только когда нужно */
 #installPwaBtn {
     display: none;
 }
@@ -287,6 +342,11 @@ label {
     .btn {
         padding: 10px;
         font-size: 14px;
+    }
+    
+    .light-controls {
+        flex-direction: column;
+        gap: 5px;
     }
     
     .map {
@@ -322,40 +382,4 @@ label {
     .install-btn-secondary {
         width: 100%;
     }
-}
-
-/* Дополнительные улучшения для PWA */
-@media (display-mode: standalone) {
-    body {
-        padding: 15px;
-    }
-    
-    .container {
-        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-    }
-    
-    .test-notice {
-        background: #e7f3ff;
-        border-color: #b3d9ff;
-        color: #0066cc;
-    }
-}
-
-/* Улучшение скроллбара для лога */
-#dataLog::-webkit-scrollbar {
-    width: 6px;
-}
-
-#dataLog::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
-}
-
-#dataLog::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 3px;
-}
-
-#dataLog::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
 }
