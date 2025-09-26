@@ -225,25 +225,6 @@
             setActiveButton('yandex');
             currentMap = 'yandex';
         }
-        
-        function loadGoogleMap() {
-            const mapContainer = document.getElementById('fullscreenMap');
-            // Используем упрощенный URL Google Maps
-            mapContainer.innerHTML = `
-                <iframe 
-                    src="https://www.google.com/maps/embed/v1/view?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&center=55.241867,72.908588&zoom=16&maptype=roadmap"
-                    width="100%" 
-                    height="100%" 
-                    frameborder="0"
-                    style="border: none;"
-                    allowfullscreen
-                    title="Google Карты">
-                </iframe>
-            `;
-            setActiveButton('google');
-            currentMap = 'google';
-        }
-        
         function loadOSMMap() {
             const mapContainer = document.getElementById('fullscreenMap');
             mapContainer.innerHTML = `
