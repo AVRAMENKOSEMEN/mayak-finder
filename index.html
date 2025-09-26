@@ -40,8 +40,20 @@
         <div class="actions">
             <button id="copyBtn" class="btn secondary" disabled>📋 Копировать координаты</button>
             <button id="openMapsBtn" class="btn secondary" disabled>🗺️ Открыть в Картах</button>
-            <button id="findBtn" class="btn danger" disabled>🔦 FIND! (Включить свет)</button>
+            
+            <!-- Кнопки управления светом -->
+            <div class="light-controls">
+                <button id="lightOnBtn" class="btn success" disabled>💡 Включить свет</button>
+                <button id="lightOffBtn" class="btn warning" disabled>🔌 Выключить свет</button>
+            </div>
+            
             <button id="testBtn" class="btn secondary">🧪 Тест: Имитация данных</button>
+        </div>
+        
+        <!-- Статус света -->
+        <div id="lightStatus" class="light-status">
+            <label>Статус маяка:</label>
+            <div id="lightStatusText">Неизвестно</div>
         </div>
         
         <!-- Мини-карта -->
