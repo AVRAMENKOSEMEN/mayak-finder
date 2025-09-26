@@ -27,7 +27,6 @@
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            z-index: 1000;
         }
         
         .back-btn {
@@ -60,6 +59,7 @@
             font-size: 14px;
             color: #333;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            text-align: center;
         }
         
         #fullscreenMap {
@@ -68,51 +68,23 @@
             background: #e0e0e0;
         }
         
-        .map-controls {
-            position: fixed;
-            top: 100px;
-            right: 20px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            background: rgba(255,255,255,0.95);
-            padding: 15px;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-            backdrop-filter: blur(10px);
-        }
-        
-        .map-btn {
-            background: white;
-            border: 2px solid #667eea;
-            padding: 12px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            color: #667eea;
-            transition: all 0.3s ease;
-            min-width: 100px;
-        }
-        
-        .map-btn:hover {
-            background: #667eea;
-            color: white;
-            transform: translateY(-2px);
-        }
-        
-        .map-btn.active {
-            background: #667eea;
-            color: white;
-        }
-        
         .loading {
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100%;
             font-size: 18px;
+            color: #666;
+        }
+        
+        .map-source {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(255,255,255,0.9);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
             color: #666;
         }
         
@@ -130,39 +102,9 @@
                 font-size: 14px;
             }
             
-            .map-controls {
-                top: 90px;
-                right: 10px;
-                padding: 10px;
-            }
-            
-            .map-btn {
-                padding: 10px;
-                font-size: 14px;
-                min-width: 80px;
-            }
-            
             .coordinates-info {
                 padding: 10px 15px;
                 font-size: 12px;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .map-controls {
-                position: fixed;
-                bottom: 20px;
-                top: auto;
-                right: 20px;
-                left: 20px;
-                flex-direction: row;
-                justify-content: space-around;
-            }
-            
-            .map-btn {
-                min-width: auto;
-                flex: 1;
-                margin: 0 5px;
             }
         }
     </style>
@@ -179,20 +121,17 @@
     
     <div id="fullscreenMap">
         <div class="loading">
-            <div>Загрузка карты...</div>
+            <div>Загрузка карты OpenStreetMap...</div>
         </div>
     </div>
     
-    <div class="map-controls">
-        <button class="map-btn active" onclick="switchToYandex()">Яндекс</button>
-        <button class="map-btn" onclick="switchToGoogle()">Google</button>
-        <button class="map-btn" onclick="switchToOSM()">OpenStreetMap</button>
+    <div class="map-source">
+        Карты: OpenStreetMap
     </div>
 
     <script>
         let currentLatitude = 55.241867942983404;
         let currentLongitude = 72.90858878021125;
-        let currentMap = 'yandex';
         
         // Получаем координаты из URL параметров
         function getCoordinatesFromURL() {
@@ -209,59 +148,22 @@
                 `Широта: ${currentLatitude.toFixed(6)}, Долгота: ${currentLongitude.toFixed(6)}`;
         }
         
-        function loadYandexMap() {
-            const mapContainer = document.getElementById('fullscreenMap');
-            mapContainer.innerHTML = `
-                <iframe 
-                    src="https://yandex.ru/maps/?pt=${currentLongitude},${currentLatitude}&z=16&l=map"
-                    width="100%" 
-                    height="100%" 
-                    frameborder="0"
-                    style="border: none;"
-                    allowfullscreen
-                    title="Яндекс Карты">
-                </iframe>
-            `;
-            setActiveButton('yandex');
-            currentMap = 'yandex';
-        }
         function loadOSMMap() {
             const mapContainer = document.getElementById('fullscreenMap');
+            // OpenStreetMap с маркером и увеличенным масштабом
+            const osmUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${currentLongitude-0.005},${currentLatitude-0.005},${currentLongitude+0.005},${currentLatitude+0.005}&marker=${currentLatitude},${currentLongitude}&layer=mapnik&zoom=17`;
+            
             mapContainer.innerHTML = `
                 <iframe 
-                    src="https://www.openstreetmap.org/export/embed.html?bbox=${currentLongitude-0.01},${currentLatitude-0.01},${currentLongitude+0.01},${currentLatitude+0.01}&marker=${currentLatitude},${currentLongitude}&layer=mapnik"
+                    src="${osmUrl}"
                     width="100%" 
                     height="100%" 
                     frameborder="0"
                     style="border: none;"
                     allowfullscreen
-                    title="OpenStreetMap">
+                    title="OpenStreetMap Карта">
                 </iframe>
             `;
-            setActiveButton('osm');
-            currentMap = 'osm';
-        }
-        
-        function setActiveButton(mapType) {
-            // Убираем активный класс у всех кнопок
-            document.querySelectorAll('.map-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // Добавляем активный класс к выбранной кнопке
-            document.querySelector(`.map-btn:nth-child(${mapType === 'yandex' ? 1 : mapType === 'google' ? 2 : 3})`).classList.add('active');
-        }
-        
-        function switchToYandex() {
-            loadYandexMap();
-        }
-        
-        function switchToGoogle() {
-            loadGoogleMap();
-        }
-        
-        function switchToOSM() {
-            loadOSMMap();
         }
         
         function goBack() {
@@ -277,7 +179,7 @@
         // Загружаем карту при старте
         document.addEventListener('DOMContentLoaded', function() {
             getCoordinatesFromURL();
-            loadYandexMap(); // По умолчанию Яндекс Карты
+            loadOSMMap();
             
             // Обработка клавиши Escape для возврата
             document.addEventListener('keydown', function(event) {
