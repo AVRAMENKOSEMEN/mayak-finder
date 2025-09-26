@@ -214,9 +214,9 @@ class MayakFinder {
     
     openInMaps() {
         if (this.latitude && this.longitude) {
-            // Открываем страницу с картой в новом окне
+            // Открываем страницу с OpenStreetMap картой
             window.open(`map.html?lat=${this.latitude}&lon=${this.longitude}`, '_blank');
-            this.log('Открываю полноэкранную карту');
+            this.log('Открываю полноэкранную карту OpenStreetMap');
         }
     }
     
