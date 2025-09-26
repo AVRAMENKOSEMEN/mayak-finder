@@ -157,10 +157,10 @@ class MayakFinder {
                     <div>Долгота: <strong>${this.longitude.toFixed(6)}</strong></div>
                 </div>
                 
-                <button onclick="window.open('https://yandex.ru/maps/?pt=${this.longitude},${this.latitude}&z=17', '_blank')" 
+                <button onclick="window.open('map.html?lat=${this.latitude}&lon=${this.longitude}', '_blank')" 
                         class="btn secondary" 
                         style="margin-top: 15px; padding: 8px 15px; font-size: 14px;">
-                    🗺️ Открыть интерактивную карту
+                    🗺️ Открыть полноэкранную карту
                 </button>
             </div>
         `;
@@ -212,6 +212,14 @@ class MayakFinder {
         }
     }
     
+    openInMaps() {
+        if (this.latitude && this.longitude) {
+            // Открываем страницу с картой в новом окне
+            window.open(`map.html?lat=${this.latitude}&lon=${this.longitude}`, '_blank');
+            this.log('Открываю полноэкранную карту');
+        }
+    }
+    
     async copyCoordinates() {
         if (this.latitude && this.longitude) {
             const coords = `${this.latitude},${this.longitude}`;
@@ -232,22 +240,6 @@ class MayakFinder {
                 document.execCommand('copy');
                 document.body.removeChild(textArea);
                 this.log('Координаты скопированы (старый метод)');
-            }
-        }
-    }
-    
-    openInMaps() {
-        if (this.latitude && this.longitude) {
-            const choice = confirm('Открыть в Google Картах (OK) или Яндекс Картах (Отмена)?');
-            
-            if (choice) {
-                const googleUrl = `https://www.google.com/maps/search/?api=1&query=${this.latitude},${this.longitude}`;
-                window.open(googleUrl, '_blank');
-                this.log('Открываю в Google Картах');
-            } else {
-                const yandexUrl = `https://yandex.ru/maps/?pt=${this.longitude},${this.longitude}&z=17`;
-                window.open(yandexUrl, '_blank');
-                this.log('Открываю в Яндекс Картах');
             }
         }
     }
