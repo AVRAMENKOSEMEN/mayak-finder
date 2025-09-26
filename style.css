@@ -37,14 +37,6 @@ h1 {
     color: #856404;
 }
 
-.pwa-install-btn {
-    background: #28a745 !important;
-    color: white !important;
-    padding: 8px 15px !important;
-    font-size: 12px !important;
-    margin-top: 5px !important;
-}
-
 .btn {
     width: 100%;
     padding: 12px;
@@ -82,17 +74,11 @@ h1 {
     color: #212529;
 }
 
-.btn.danger {
-    background: #dc3545;
-    color: white;
-}
-
 .btn:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
-/* Контейнер для кнопок света */
 .light-controls {
     display: flex;
     gap: 10px;
@@ -104,70 +90,21 @@ h1 {
     flex: 1;
 }
 
-/* Статус света */
-.light-status {
-    margin: 15px 0;
-    padding: 15px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background: #f8f9fa;
-}
-
-.light-status.on {
-    background: #d4edda;
-    border-color: #c3e6cb;
-    color: #155724;
-}
-
-.light-status.off {
-    background: #f8d7da;
-    border-color: #f5c6cb;
-    color: #721c24;
-}
-
-.light-status.unknown {
-    background: #e2e3e5;
-    border-color: #d6d8db;
-    color: #383d41;
-}
-
-#lightStatusText {
-    font-weight: 600;
-    margin-top: 5px;
-    padding: 5px;
-    border-radius: 3px;
-}
-
 .status {
     padding: 10px;
     border-radius: 5px;
     margin-bottom: 15px;
     text-align: center;
     font-weight: 600;
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
 }
 
 .status.connected {
     background: #d4edda;
     color: #155724;
     border: 1px solid #c3e6cb;
-}
-
-.status.disconnected {
-    background: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
-
-.status.connecting {
-    background: #cce7ff;
-    color: #004085;
-    border: 1px solid #b3d7ff;
-}
-
-.status.error {
-    background: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
 }
 
 .coordinates, .map-container, .log {
@@ -260,76 +197,6 @@ label {
     gap: 10px;
 }
 
-/* Стили для PWA уведомления */
-.install-prompt {
-    display: none;
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #28a745;
-    color: white;
-    padding: 15px;
-    border-radius: 10px;
-    z-index: 1000;
-    max-width: 90%;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    animation: slideUp 0.3s ease;
-    border: 2px solid #1e7e34;
-}
-
-.install-prompt .install-content {
-    text-align: center;
-}
-
-.install-prompt .install-content span {
-    display: block;
-    margin-bottom: 10px;
-    font-weight: 600;
-}
-
-.install-buttons {
-    margin-top: 10px;
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-}
-
-.install-btn-primary {
-    background: white;
-    color: #28a745;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: 600;
-}
-
-.install-btn-secondary {
-    background: transparent;
-    color: white;
-    border: 1px solid white;
-    padding: 8px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-@keyframes slideUp {
-    from { 
-        transform: translateX(-50%) translateY(100px); 
-        opacity: 0; 
-    }
-    to { 
-        transform: translateX(-50%) translateY(0); 
-        opacity: 1; 
-    }
-}
-
-#installPwaBtn {
-    display: none;
-}
-
-/* Адаптивность для мобильных */
 @media (max-width: 480px) {
     body {
         padding: 10px;
@@ -351,35 +218,5 @@ label {
     
     .map {
         height: 180px;
-    }
-    
-    .install-prompt {
-        bottom: 10px;
-        padding: 12px;
-    }
-}
-
-@media (max-width: 360px) {
-    .container {
-        padding: 10px;
-    }
-    
-    h1 {
-        font-size: 1.5em;
-    }
-    
-    .btn {
-        padding: 8px;
-        font-size: 13px;
-    }
-    
-    .install-buttons {
-        flex-direction: column;
-        gap: 5px;
-    }
-    
-    .install-btn-primary,
-    .install-btn-secondary {
-        width: 100%;
     }
 }
