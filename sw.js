@@ -1,16 +1,46 @@
-// Простой Service Worker для PWA
-const CACHE_NAME = 'mayak-finder-map-v1';
+// Service Worker для оффлайн работы
+const CACHE_NAME = 'mayak-finder-offline-v1';
+const urlsToCache = [
+  './',
+  './index.html',
+  './navigator.html',
+  './style.css',
+  './script.js',
+  './manifest.json'
+];
 
 self.addEventListener('install', function(event) {
-  self.skipWaiting();
-  console.log('Service Worker установлен');
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(function(cache) {
+        return cache.addAll(urlsToCache);
+      })
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', function(event) {
-  event.waitUntil(self.clients.claim());
-  console.log('Service Worker активирован');
+  event.waitUntil(
+    caches.keys().then(function(cacheNames) {
+      return Promise.all(
+        cacheNames.map(function(cacheName) {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener('fetch', function(event) {
-  event.respondWith(fetch(event.request));
+  event.respondWith(
+    caches.match(event.request)
+      .then(function(response) {
+        if (response) {
+          return response;
+        }
+        return fetch(event.request);
+      })
+  );
 });
