@@ -5,20 +5,19 @@ class MayakFinder {
         this.rxCharacteristic = null;
         this.txCharacteristic = null;
         
-        this.latitude = null;
-        this.longitude = null;
+        this.latitude = 55.241867942983404;
+        this.longitude = 72.90858878021125;
+        
         this.isConnected = false;
         
         this.initializeElements();
         this.setupEventListeners();
-        this.setupOfflineHandling();
         this.initializeTestData();
     }
     
     initializeElements() {
         this.connectBtn = document.getElementById('connectBtn');
         this.statusDiv = document.getElementById('status');
-        this.onlineStatus = document.getElementById('onlineStatus');
         this.coordinatesText = document.getElementById('coordinatesText');
         this.copyBtn = document.getElementById('copyBtn');
         this.openNavBtn = document.getElementById('openNavBtn');
@@ -38,39 +37,20 @@ class MayakFinder {
         this.testBtn.addEventListener('click', () => this.simulateMayakData());
     }
     
-    setupOfflineHandling() {
-        // Проверяем онлайн статус при загрузке
-        this.updateOnlineStatus();
-        
-        // Слушаем изменения онлайн статуса
-        window.addEventListener('online', () => {
-            this.log('✅ Интернет подключен');
-            this.updateOnlineStatus();
-        });
-        
-        window.addEventListener('offline', () => {
-            this.log('🔴 Интернет отключен, работаем оффлайн');
-            this.updateOnlineStatus();
-        });
-    }
-    
-    updateOnlineStatus() {
-        const isOnline = navigator.onLine;
-        this.onlineStatus.textContent = isOnline ? '🟢 Онлайн режим' : '🔴 Оффлайн режим';
-        this.onlineStatus.className = `status ${isOnline ? 'online' : 'offline'};
-    }
-    
     initializeTestData() {
-        this.log('Приложение загружено. Ожидание подключения к маяку.');
-        this.setButtonsState(false);
-        this.updateStatus('Готов к работе', 'online');
+        this.log('Приложение загружено. Тестовый режим.');
+        this.updateCoordinates();
+        this.updateMap();
+        this.setButtonsState(true);
+        this.updateStatus('Тестовый режим', 'connected');
     }
     
     simulateMayakData() {
         const testCoordinates = [
-            { lat: 55.241867, lon: 72.908588, name: "Основная позиция" },
+            { lat: 55.241867942983404, lon: 72.90858878021125, name: "Основная позиция" },
             { lat: 55.2420, lon: 72.9090, name: "Смещение +10м" },
-            { lat: 55.2415, lon: 72.9080, name: "Смещение -10м" }
+            { lat: 55.2415, lon: 72.9080, name: "Смещение -10м" },
+            { lat: 55.2418, lon: 72.9085, name: "Текущее положение" }
         ];
         
         const randomCoord = testCoordinates[Math.floor(Math.random() * testCoordinates.length)];
@@ -78,8 +58,11 @@ class MayakFinder {
         this.latitude = randomCoord.lat;
         this.longitude = randomCoord.lon;
         
-        this.log(`[ТЕСТ] Получены координаты: ${randomCoord.name}`);
-        this.processCoordinates(this.latitude, this.longitude, -45, 85);
+        this.log(`[ТЕСТ] Новые координаты: ${randomCoord.name}`);
+        this.log(`[ТЕСТ] GPS:${this.latitude},${this.longitude}`);
+        
+        this.updateCoordinates();
+        this.updateMap();
     }
     
     async connectToDevice() {
@@ -88,19 +71,25 @@ class MayakFinder {
             
             if (!navigator.bluetooth) {
                 this.log('Браузер не поддерживает Web Bluetooth API');
-                this.updateStatus('Bluetooth не поддерживается', 'offline');
+                this.updateStatus('Bluetooth не поддерживается', 'error');
                 return;
             }
             
             const UART_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+            const TX_CHARACTERISTIC_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+            const RX_CHARACTERISTIC_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
             
             this.device = await navigator.bluetooth.requestDevice({
-                filters: [{ services: [UART_SERVICE_UUID] }],
+                filters: [
+                    { name: 'My nRF52 Beacon' },
+                    { namePrefix: 'nRF52' },
+                    { services: [UART_SERVICE_UUID] }
+                ],
                 optionalServices: [UART_SERVICE_UUID]
             });
             
-            this.log(`Подключение к ${this.device.name}...`);
-            this.updateStatus('Подключение...', 'online');
+            this.log(`Подключаюсь к ${this.device.name}...`);
+            this.updateStatus('Подключение...', 'connecting');
             
             this.device.addEventListener('gattserverdisconnected', () => {
                 this.onDisconnected();
@@ -110,77 +99,49 @@ class MayakFinder {
             this.server = server;
             
             const service = await server.getPrimaryService(UART_SERVICE_UUID);
-            const txCharacteristic = await service.getCharacteristic('6e400003-b5a3-f393-e0a9-e50e24dcca9e');
-            this.rxCharacteristic = await service.getCharacteristic('6e400002-b5a3-f393-e0a9-e50e24dcca9e');
             
-            await txCharacteristic.startNotifications();
-            txCharacteristic.addEventListener('characteristicvaluechanged', 
+            this.txCharacteristic = await service.getCharacteristic(TX_CHARACTERISTIC_UUID);
+            this.rxCharacteristic = await service.getCharacteristic(RX_CHARACTERISTIC_UUID);
+            
+            await this.txCharacteristic.startNotifications();
+            this.txCharacteristic.addEventListener('characteristicvaluechanged', 
                 (event) => this.handleDataReceived(event));
             
             this.isConnected = true;
-            this.log('Успешно подключено! Ожидание данных от маяка...');
-            this.updateStatus('Подключено к маяку', 'online');
+            this.log('Успешно подключено! Ожидание реальных данных...');
+            this.updateStatus('Подключено к маяку', 'connected');
             this.setButtonsState(true);
             
         } catch (error) {
-            this.log('Ошибка подключения: ' + error);
-            this.updateStatus('Ошибка подключения', 'offline');
+            this.log(`Ошибка подключения: ${error}`);
+            this.updateStatus('Ошибка подключения', 'error');
+            this.log('Остаюсь в тестовом режиме с фиктивными координатами');
+            this.updateStatus('Тестовый режим (Bluetooth недоступен)', 'connected');
         }
     }
     
     handleDataReceived(event) {
-        try {
-            const value = event.target.value;
-            const decoder = new TextDecoder();
-            const data = decoder.decode(value);
-            
-            this.log(`Данные с маяка: ${data}`);
-            
-            if (data.startsWith('GPS:')) {
-                this.parseAndProcessData(data);
+        const value = event.target.value;
+        const decoder = new TextDecoder();
+        const data = decoder.decode(value);
+        
+        this.log(`Получено с маяка: ${data}`);
+        
+        if (data.startsWith('GPS:')) {
+            const coords = data.replace('GPS:', '').split(',');
+            if (coords.length === 2) {
+                this.latitude = parseFloat(coords[0]);
+                this.longitude = parseFloat(coords[1]);
+                this.updateCoordinates();
+                this.log('Координаты обновлены с маяка');
             }
-        } catch (error) {
-            this.log('Ошибка обработки данных: ' + error);
         }
     }
     
-    parseAndProcessData(data) {
-        // Формат: "GPS:55.241867,72.908588,RSSI:-45,BAT:85"
-        const parts = data.split(',');
-        let lat, lon, rssi = -45, bat = 0;
-        
-        if (parts[0].startsWith('GPS:')) {
-            const coords = parts[0].substring(4).split(',');
-            if (coords.length >= 2) {
-                lat = parseFloat(coords[0]);
-                lon = parseFloat(coords[1]);
-            }
-        }
-        
-        // Парсим RSSI и BAT
-        parts.forEach(part => {
-            if (part.startsWith('RSSI:')) rssi = parseInt(part.substring(5));
-            if (part.startsWith('BAT:')) bat = parseInt(part.substring(4));
-        });
-        
-        if (lat && lon) {
-            this.processCoordinates(lat, lon, rssi, bat);
-        }
-    }
-    
-    processCoordinates(lat, lon, rssi, battery) {
-        this.latitude = lat;
-        this.longitude = lon;
-        
-        // Обновляем интерфейс
-        const coordsText = `Широта: ${lat.toFixed(6)}, Долгота: ${lon.toFixed(6)}`;
-        if (rssi) coordsText += `, Сигнал: ${rssi}dBm`;
-        if (battery) coordsText += `, Батарея: ${battery}%`;
-        
+    updateCoordinates() {
+        const coordsText = `Широта: ${this.latitude.toFixed(6)}, Долгота: ${this.longitude.toFixed(6)}`;
         this.coordinatesText.textContent = coordsText;
         this.updateMap();
-        
-        this.log(`Координаты обновлены: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
     }
     
     updateMap() {
@@ -205,48 +166,56 @@ class MayakFinder {
         `;
     }
     
-    openNavigator() {
-        if (this.latitude && this.longitude) {
-            window.open(`navigator.html?lat=${this.latitude}&lon=${this.longitude}`, '_blank');
-            this.log('Открываю оффлайн-навигатор');
-        }
-    }
-    
     async turnLightOn() {
         if (!this.isConnected) {
             this.log('[ТЕСТ] Команда ВКЛЮЧИТЬ свет отправлена');
-            alert('[ТЕСТ] Свет включен!');
+            this.log('[ТЕСТ] Свет и звук на маяке должны включиться');
+            alert('[ТЕСТ] Команда "Включить свет" отправлена! Свет и звук включены (имитация)');
             return;
         }
         
-        if (!this.rxCharacteristic) return;
+        if (!this.rxCharacteristic) {
+            this.log('Не подключено к устройству');
+            return;
+        }
         
         try {
             const encoder = new TextEncoder();
             const data = encoder.encode('CMD:LED_ON');
             await this.rxCharacteristic.writeValue(data);
-            this.log('Команда включения света отправлена');
+            this.log('Команда включения света отправлена на маяк');
         } catch (error) {
-            this.log('Ошибка отправки: ' + error);
+            this.log(`Ошибка отправки команды: ${error}`);
         }
     }
     
     async turnLightOff() {
         if (!this.isConnected) {
             this.log('[ТЕСТ] Команда ВЫКЛЮЧИТЬ свет отправлена');
-            alert('[ТЕСТ] Свет выключен!');
+            this.log('[ТЕСТ] Свет и звук на маяке должны выключиться');
+            alert('[ТЕСТ] Команда "Выключить свет" отправлена! Свет и звук выключены (имитация)');
             return;
         }
         
-        if (!this.rxCharacteristic) return;
+        if (!this.rxCharacteristic) {
+            this.log('Не подключено к устройству');
+            return;
+        }
         
         try {
             const encoder = new TextEncoder();
             const data = encoder.encode('CMD:LED_OFF');
             await this.rxCharacteristic.writeValue(data);
-            this.log('Команда выключения света отправлена');
+            this.log('Команда выключения света отправлена на маяк');
         } catch (error) {
-            this.log('Ошибка отправки: ' + error);
+            this.log(`Ошибка отправки команды: ${error}`);
+        }
+    }
+    
+    openNavigator() {
+        if (this.latitude && this.longitude) {
+            window.open(`navigator.html?lat=${this.latitude}&lon=${this.longitude}`, '_blank');
+            this.log('Открываю навигатор');
         }
     }
     
@@ -255,7 +224,7 @@ class MayakFinder {
             const coords = `${this.latitude},${this.longitude}`;
             try {
                 await navigator.clipboard.writeText(coords);
-                this.log('Координаты скопированы');
+                this.log('Координаты скопированы в буфер обмена');
                 
                 const originalText = this.copyBtn.textContent;
                 this.copyBtn.textContent = '✅ Скопировано!';
@@ -263,7 +232,6 @@ class MayakFinder {
                     this.copyBtn.textContent = originalText;
                 }, 2000);
             } catch (error) {
-                // Fallback
                 const textArea = document.createElement('textarea');
                 textArea.value = coords;
                 document.body.appendChild(textArea);
@@ -277,9 +245,11 @@ class MayakFinder {
     
     onDisconnected() {
         this.log('Устройство отключено');
-        this.updateStatus('Отключено', 'offline');
+        this.updateStatus('Отключено', 'disconnected');
         this.setButtonsState(false);
         this.isConnected = false;
+        this.device = null;
+        this.server = null;
     }
     
     updateStatus(message, type) {
