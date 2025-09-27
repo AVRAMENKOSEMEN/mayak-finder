@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mayak Finder</title>
+    <title>Mayak Finder - Оффлайн</title>
     <meta name="theme-color" content="#667eea">
-    <meta name="description" content="Приложение для поиска маяка по Bluetooth">
+    <meta name="description" content="Оффлайн приложение для поиска маяка по Bluetooth">
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="https://img.icons8.com/fluency/48/000000/bluetooth.png">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <h1>🔍 Mayak Finder</h1>
         
-        <div class="test-notice">
-            <strong>Тестовый режим:</strong> Используются фиктивные координаты
+        <div id="onlineStatus" class="status offline">
+            🔴 Режим оффлайн
         </div>
         
         <button id="connectBtn" class="btn primary">📡 Подключиться к Bluetooth</button>
@@ -23,20 +23,20 @@
         <div id="status" class="status">Не подключено</div>
         
         <div class="coordinates">
-            <label>Последние координаты:</label>
-            <div id="coordinatesText">Ожидание данных...</div>
+            <label>Последние координаты маяка:</label>
+            <div id="coordinatesText">Ожидание данных от маяка...</div>
         </div>
         
         <div class="actions">
             <button id="copyBtn" class="btn secondary" disabled>📋 Копировать координаты</button>
-            <button id="openMapsBtn" class="btn secondary" disabled>🗺️ Открыть в Картах</button>
+            <button id="openNavBtn" class="btn secondary" disabled>🧭 Открыть навигатор</button>
             
             <div class="light-controls">
                 <button id="lightOnBtn" class="btn success" disabled>💡 Включить свет</button>
                 <button id="lightOffBtn" class="btn warning" disabled>🔌 Выключить свет</button>
             </div>
             
-            <button id="testBtn" class="btn secondary">🧪 Тест: Новые координаты</button>
+            <button id="testBtn" class="btn secondary">🧪 Тестовые данные</button>
         </div>
 
         <div class="map-container">
@@ -45,7 +45,7 @@
                 <div id="staticMap">
                     <div class="map-placeholder">
                         <div class="map-icon">🗺️</div>
-                        <div class="map-text">Карта будет загружена после получения координат</div>
+                        <div class="map-text">Данные появятся здесь после подключения</div>
                     </div>
                 </div>
             </div>
