@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Навигатор - Mayak Finder</title>
+    <title>Оффлайн навигатор - Mayak Finder</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
             font-family: Arial, sans-serif; 
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
         }
         .container { 
             max-width: 400px; 
@@ -20,26 +20,17 @@
             padding: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
-        h1 { text-align: center; margin-bottom: 20px; }
-        .compass { 
-            font-size: 80px; 
-            text-align: center; 
-            margin: 20px 0;
-            transition: transform 0.3s;
-        }
-        .distance { 
-            font-size: 32px; 
-            font-weight: bold; 
-            text-align: center; 
-            color: #667eea;
-            margin: 20px 0;
-        }
+        .header { text-align: center; margin-bottom: 20px; }
+        .compass-container { text-align: center; margin: 20px 0; }
+        .compass { font-size: 80px; margin: 20px 0; transition: transform 0.3s; }
+        .distance { font-size: 28px; font-weight: bold; color: #667eea; margin: 10px 0; }
         .coordinates { 
             background: #f8f9fa; 
             padding: 15px; 
             border-radius: 10px; 
             margin: 15px 0;
             font-family: monospace;
+            font-size: 14px;
         }
         .status { 
             background: #fff3cd; 
@@ -47,6 +38,7 @@
             border-radius: 5px; 
             margin: 10px 0;
             text-align: center;
+            font-size: 14px;
         }
         button { 
             width: 100%; 
@@ -60,16 +52,24 @@
         }
         .primary { background: #667eea; color: white; }
         .secondary { background: #6c757d; color: white; }
+        .success { background: #28a745; color: white; }
+        .danger { background: #dc3545; color: white; }
+        #miniMap { height: 200px; margin: 15px 0; border-radius: 10px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🧭 Навигатор</h1>
+        <div class="header">
+            <h1>🧭 Оффлайн навигатор</h1>
+            <div class="status" id="status">📍 Ожидание GPS...</div>
+        </div>
         
-        <div class="status" id="status">Нажмите "Начать навигацию"</div>
+        <div class="compass-container">
+            <div class="compass" id="compass">↑</div>
+            <div class="distance" id="distance">-- км</div>
+        </div>
         
-        <div class="compass" id="compass">↑</div>
-        <div class="distance" id="distance">-- км</div>
+        <div id="miniMap"></div>
         
         <div class="coordinates">
             <div><strong>Цель (маяк):</strong></div>
@@ -80,82 +80,156 @@
                 <strong>Мое положение:</strong></div>
             <div>Ш: <span id="myLat">--</span></div>
             <div>Д: <span id="myLon">--</span></div>
+            <div>Точность: <span id="accuracy">-- м</span></div>
         </div>
         
-        <button class="primary" onclick="startNavigation()" id="navBtn">🚀 Начать навигацию</button>
-        <button class="secondary" onclick="goBack()">← Назад</button>
+        <button class="success" id="navBtn" onclick="toggleNavigation()">🚀 Начать навигацию</button>
+        <button class="secondary" onclick="goBack()">← Назад к карте</button>
     </div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        let targetLat = 55.241867942983404;
-        let targetLon = 72.90858878021125;
+        let targetLat, targetLon;
         let isNavigating = false;
+        let watchId = null;
+        let map, userMarker, targetMarker;
         
-        // Получаем координаты из URL
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('lat')) targetLat = parseFloat(urlParams.get('lat'));
-        if (urlParams.get('lon')) targetLon = parseFloat(urlParams.get('lon'));
+        function init() {
+            // Получаем координаты маяка из URL
+            const urlParams = new URLSearchParams(window.location.search);
+            targetLat = parseFloat(urlParams.get('lat')) || 55.241867;
+            targetLon = parseFloat(urlParams.get('lon')) || 72.908588;
+            
+            document.getElementById('targetLat').textContent = targetLat.toFixed(6);
+            document.getElementById('targetLon').textContent = targetLon.toFixed(6);
+            
+            // Инициализируем мини-карту
+            initMiniMap();
+            
+            updateStatus('📍 Координаты маяка загружены');
+        }
         
-        document.getElementById('targetLat').textContent = targetLat.toFixed(6);
-        document.getElementById('targetLon').textContent = targetLon.toFixed(6);
+        function initMiniMap() {
+            // Создаем простую карту с сеткой (оффлайн)
+            map = L.map('miniMap').setView([targetLat, targetLon], 13);
+            
+            // Используем легковесный тайловый слой (работает оффлайн)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap',
+                maxZoom: 18
+            }).addTo(map);
+            
+            // Маркер цели
+            targetMarker = L.marker([targetLat, targetLon])
+                .addTo(map)
+                .bindPopup('🎯 Маяк')
+                .openPopup();
+        }
         
-        function startNavigation() {
+        function toggleNavigation() {
             if (isNavigating) {
                 stopNavigation();
-                return;
+            } else {
+                startNavigation();
             }
-            
+        }
+        
+        function startNavigation() {
             if (!navigator.geolocation) {
-                alert('GPS не поддерживается в вашем браузере');
+                updateStatus('❌ Ваш браузер не поддерживает GPS');
                 return;
             }
             
-            document.getElementById('status').textContent = 'Ищем GPS сигнал...';
-            document.getElementById('navBtn').textContent = '⏹️ Остановить';
-            document.getElementById('navBtn').style.background = '#dc3545';
+            updateStatus('📡 Поиск GPS сигнала...');
             
-            navigator.geolocation.watchPosition(
-                function(position) {
+            watchId = navigator.geolocation.watchPosition(
+                position => {
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+                    
                     isNavigating = true;
-                    updatePosition(lat, lon);
+                    updatePosition(lat, lon, accuracy);
                 },
-                function(error) {
-                    alert('Ошибка GPS: ' + error.message);
-                    stopNavigation();
+                error => {
+                    handleGeolocationError(error);
                 },
-                { enableHighAccuracy: true }
+                { 
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 30000
+                }
             );
+            
+            document.getElementById('navBtn').textContent = '⏹️ Остановить';
+            document.getElementById('navBtn').className = 'danger';
         }
         
         function stopNavigation() {
+            if (watchId) {
+                navigator.geolocation.clearWatch(watchId);
+            }
             isNavigating = false;
             document.getElementById('navBtn').textContent = '🚀 Начать навигацию';
-            document.getElementById('navBtn').style.background = '#667eea';
-            document.getElementById('status').textContent = 'Навигация остановлена';
+            document.getElementById('navBtn').className = 'success';
+            updateStatus('⏹️ Навигация остановлена');
         }
         
-        function updatePosition(lat, lon) {
-            // Расчет расстояния
-            const distance = getDistance(lat, lon, targetLat, targetLon);
+        function updatePosition(lat, lon, accuracy) {
+            // Рассчитываем расстояние и направление
+            const distance = calculateDistance(lat, lon, targetLat, targetLon);
+            const bearing = calculateBearing(lat, lon, targetLat, targetLon);
+            
+            // Обновляем интерфейс
             document.getElementById('distance').textContent = distance.toFixed(1) + ' км';
             document.getElementById('myLat').textContent = lat.toFixed(6);
             document.getElementById('myLon').textContent = lon.toFixed(6);
+            document.getElementById('accuracy').textContent = Math.round(accuracy) + ' м';
             
-            // Расчет направления
-            const bearing = getBearing(lat, lon, targetLat, targetLon);
+            // Обновляем компас и карту
             updateCompass(bearing);
-            
-            // Обновление статуса
-            if (distance < 0.1) {
-                document.getElementById('status').textContent = '🎯 Вы на месте!';
+            updateMap(lat, lon);
+            updateNavigationStatus(distance, accuracy);
+        }
+        
+        function updateMap(lat, lon) {
+            // Обновляем позицию пользователя на карте
+            if (userMarker) {
+                userMarker.setLatLng([lat, lon]);
             } else {
-                document.getElementById('status').textContent = 'Следуйте за стрелкой';
+                userMarker = L.marker([lat, lon])
+                    .addTo(map)
+                    .bindPopup('📍 Вы здесь');
+            }
+            
+            // Центрируем карту между пользователем и целью
+            const group = new L.featureGroup([userMarker, targetMarker]);
+            map.fitBounds(group.getBounds().pad(0.1));
+        }
+        
+        function updateCompass(bearing) {
+            const compass = document.getElementById('compass');
+            compass.style.transform = `rotate(${bearing}deg)`;
+            
+            // Выбираем emoji направления
+            const directions = ['↑', '↗️', '→', '↘️', '↓', '↙️', '←', '↖️'];
+            const index = Math.round(bearing / 45) % 8;
+            compass.textContent = directions[index];
+        }
+        
+        function updateNavigationStatus(distance, accuracy) {
+            if (distance < 0.05) {
+                updateStatus('🎯 Вы прибыли! Маяк должен быть рядом');
+            } else if (distance < 0.1) {
+                updateStatus('🔦 Маяк очень близко! Включите свет');
+            } else if (distance < 0.5) {
+                updateStatus('📡 Приближаетесь к маяку');
+            } else {
+                updateStatus('🧭 Следуйте направлению компаса');
             }
         }
         
-        function getDistance(lat1, lon1, lat2, lon2) {
+        function calculateDistance(lat1, lon1, lat2, lon2) {
             const R = 6371;
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
@@ -166,7 +240,7 @@
             return R * c;
         }
         
-        function getBearing(lat1, lon1, lat2, lon2) {
+        function calculateBearing(lat1, lon1, lat2, lon2) {
             const φ1 = lat1 * Math.PI / 180;
             const φ2 = lat2 * Math.PI / 180;
             const Δλ = (lon2 - lon1) * Math.PI / 180;
@@ -178,14 +252,33 @@
             return (θ * 180 / Math.PI + 360) % 360;
         }
         
-        function updateCompass(bearing) {
-            const compass = document.getElementById('compass');
-            compass.style.transform = `rotate(${bearing}deg)`;
+        function handleGeolocationError(error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    updateStatus('❌ Разрешите доступ к GPS в настройках');
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    updateStatus('❌ GPS сигнал недоступен');
+                    break;
+                case error.TIMEOUT:
+                    updateStatus('❌ Таймаут поиска GPS');
+                    break;
+                default:
+                    updateStatus('❌ Ошибка GPS');
+            }
+            stopNavigation();
+        }
+        
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
         }
         
         function goBack() {
             window.history.back();
         }
+        
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
