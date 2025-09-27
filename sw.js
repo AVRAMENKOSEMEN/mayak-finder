@@ -32,15 +32,23 @@ self.addEventListener('activate', function(event) {
     }).then(() => self.clients.claim())
   );
 });
-
-self.addEventListener('fetch', function(event) {
+ self.addEventListener('fetch', function(event) {
   event.respondWith(
     caches.match(event.request)
       .then(function(response) {
+        // Всегда возвращаем из кэша если есть
         if (response) {
           return response;
         }
+        
+        // Если нет в кэше и нет интернета - показываем оффлайн страницу
+        if (!navigator.onLine) {
+          return caches.match('./offline.html');
+        }
+        
+        // Если есть интернет - загружаем из сети
         return fetch(event.request);
       })
   );
 });
+
