@@ -213,14 +213,20 @@ class MayakFinder {
     }
     
     openInMaps() {
-        if (this.latitude && this.longitude) {
-            // Открываем страницу с OpenStreetMap картой
+    if (this.latitude && this.longitude) {
+        // Проверяем онлайн статус
+        if (navigator.onLine) {
+            // Онлайн: открываем обычную карту
             window.open(`map.html?lat=${this.latitude}&lon=${this.longitude}`, '_blank');
-            this.log('Открываю полноэкранную карту OpenStreetMap');
+            this.log('Открываю онлайн-карту');
+        } else {
+            // Оффлайн: открываем компас-навигатор
+            window.open(`compass.html?lat=${this.latitude}&lon=${this.longitude}`, '_blank');
+            this.log('Открываю оффлайн-навигатор');
         }
     }
-    
-    async copyCoordinates() {
+}
+        async copyCoordinates() {
         if (this.latitude && this.longitude) {
             const coords = `${this.latitude},${this.longitude}`;
             try {
@@ -278,3 +284,4 @@ class MayakFinder {
 document.addEventListener('DOMContentLoaded', () => {
     new MayakFinder();
 });
+
