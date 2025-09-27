@@ -2,7 +2,6 @@
   "name": "mayak-finder",
   "version": "0.1.0",
   "homepage": "https://AVRAMENKOSEMEN.github.io/mayak-finder",
-  // ... остальное остается как есть ...
   
   "scripts": {
     "predeploy": "npm run build",
