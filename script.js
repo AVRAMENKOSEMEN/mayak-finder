@@ -1,4 +1,3 @@
-// Основной скрипт приложения - ИСПРАВЛЕННАЯ ВЕРСИЯ
 class MayakFinder {
     constructor() {
         this.latitude = null;
@@ -6,33 +5,28 @@ class MayakFinder {
         this.device = null;
         this.server = null;
         this.isConnected = false;
+        this.coordinatesCount = 0;
+        this.map = null;
         
         this.init();
     }
 
     init() {
         this.bindEvents();
-        this.checkOnlineStatus();
-        this.loadSettingsUI();
-        this.loadHistoryUI();
+        this.initMiniMap();
+        this.updateCoordinatesCount();
     }
 
     bindEvents() {
-        // Основные кнопки
         document.getElementById('connectBtn').addEventListener('click', () => this.connectBluetooth());
         document.getElementById('copyBtn').addEventListener('click', () => this.copyCoordinates());
-        document.getElementById('openNavBtn').addEventListener('click', () => this.openNavigator()); // ИСПРАВЛЕНО
+        document.getElementById('openMapBtn').addEventListener('click', () => this.openMap());
         document.getElementById('testBtn').addEventListener('click', () => this.useTestData());
-        
-        // Управление светом
         document.getElementById('lightOnBtn').addEventListener('click', () => this.controlLight(true));
         document.getElementById('lightOffBtn').addEventListener('click', () => this.controlLight(false));
-        
-        // Новые кнопки
         document.getElementById('settingsBtn').addEventListener('click', () => this.showSettings());
         document.getElementById('historyBtn').addEventListener('click', () => this.showHistory());
-        
-        // Модальные окна
+
         document.querySelectorAll('.close-modal').forEach(btn => {
             btn.addEventListener('click', (e) => this.closeModal(e.target.closest('.modal')));
         });
@@ -42,59 +36,31 @@ class MayakFinder {
                 if (e.target === modal) this.closeModal(modal);
             });
         });
-
-        window.addEventListener('online', () => this.updateOnlineStatus(true));
-        window.addEventListener('offline', () => this.updateOnlineStatus(false));
     }
 
-    // ИСПРАВЛЕННЫЙ МЕТОД - открытие навигатора
-    openNavigator() {
-        console.log('🔄 Попытка открыть навигатор...');
-        
-        if (this.latitude && this.longitude) {
-            const navUrl = `navigator.html?lat=${this.latitude}&lon=${this.longitude}`;
-            console.log('📍 URL навигатора:', navUrl);
+    initMiniMap() {
+        const mapContainer = document.getElementById('mapPreview');
+        if (!mapContainer || !L) return;
+
+        try {
+            this.map = L.map('mapPreview').setView([55.241867, 72.908588], 3);
             
-            // Пробуем открыть в новом окне/вкладке
-            try {
-                const newWindow = window.open(navUrl, '_blank');
-                
-                if (newWindow) {
-                    console.log('✅ Навигатор открыт в новом окне');
-                    this.log('🧭 Навигатор открыт');
-                    
-                    // Фокус на новое окно
-                    setTimeout(() => {
-                        if (newWindow) {
-                            newWindow.focus();
-                        }
-                    }, 100);
-                } else {
-                    // Если браузер заблокировал popup, открываем в текущем окне
-                    console.log('⚠️ Popup заблокирован, открываем в текущем окне');
-                    window.location.href = navUrl;
-                }
-            } catch (error) {
-                console.error('❌ Ошибка открытия навигатора:', error);
-                this.fallbackNavigation();
-            }
-        } else {
-            this.log('❌ Нет координат для навигации');
-            alert('Сначала получите координаты маяка (используйте тестовые данные или подключите Bluetooth)');
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap',
+                maxZoom: 18
+            }).addTo(this.map);
+
+            // Добавляем начальный маркер
+            L.marker([55.241867, 72.908588])
+                .addTo(this.map)
+                .bindPopup('📍 Ожидание данных маяка')
+                .openPopup();
+
+        } catch (error) {
+            console.log('Мини-карта не инициализирована:', error);
         }
     }
 
-    // Резервный вариант навигации
-    fallbackNavigation() {
-        if (this.latitude && this.longitude) {
-            // Пробуем открыть через универсальную ссылку
-            const universalUrl = `https://www.openstreetmap.org/?mlat=${this.latitude}&mlon=${this.longitude}#map=15/${this.latitude}/${this.longitude}`;
-            window.open(universalUrl, '_blank');
-            this.log('🗺️ Открыт резервный навигатор (OpenStreetMap)');
-        }
-    }
-
-    // Остальные методы остаются без изменений
     async connectBluetooth() {
         try {
             this.log('🔵 Поиск Bluetooth устройств...');
@@ -121,10 +87,6 @@ class MayakFinder {
             
             this.isConnected = true;
             this.updateConnectionStatus(true);
-            
-            if (window.notificationManager) {
-                window.notificationManager.showConnectionNotification(true, this.device.name);
-            }
 
         } catch (error) {
             this.log('❌ Ошибка подключения: ' + error.message);
@@ -134,43 +96,30 @@ class MayakFinder {
 
     async setupBluetoothServices(server) {
         try {
-            // ЗАМЕНИТЕ НА РЕАЛЬНЫЕ UUID ВАШЕГО УСТРОЙСТВА
-            const service = await server.getPrimaryService('12345678-1234-5678-9abc-123456789abc');
-            const characteristic = await service.getCharacteristic('12345678-1234-5678-9abc-123456789abd');
+            // Эмуляция получения данных для тестирования
+            this.log('📡 Ожидание данных от маяка...');
             
-            await characteristic.startNotifications();
-            characteristic.addEventListener('characteristicvaluechanged', 
-                (event) => this.handleData(event.target.value));
-                
-            this.log('✅ Сервисы Bluetooth настроены');
+            // Имитируем получение данных каждые 5 секунд
+            setInterval(() => {
+                if (this.isConnected) {
+                    const testLat = 55.241867 + (Math.random() - 0.5) * 0.001;
+                    const testLon = 72.908588 + (Math.random() - 0.5) * 0.001;
+                    this.handleReceivedData(testLat, testLon);
+                }
+            }, 5000);
+
         } catch (error) {
             this.log('⚠️ Не удалось настроить сервисы: ' + error.message);
         }
     }
 
-    handleData(data) {
-        try {
-            const textDecoder = new TextDecoder();
-            const coordinates = textDecoder.decode(data).split(',');
-            
-            if (coordinates.length === 2) {
-                const lat = parseFloat(coordinates[0]);
-                const lon = parseFloat(coordinates[1]);
-                
-                if (!isNaN(lat) && !isNaN(lon)) {
-                    this.updateCoordinates(lat, lon);
-                    
-                    if (window.coordinatesHistory) {
-                        window.coordinatesHistory.addEntry(lat, lon);
-                    }
-                    
-                    if (window.notificationManager) {
-                        window.notificationManager.showNewCoordinateAlert({lat, lon});
-                    }
-                }
-            }
-        } catch (error) {
-            this.log('❌ Ошибка обработки данных: ' + error.message);
+    handleReceivedData(lat, lon) {
+        this.updateCoordinates(lat, lon);
+        this.coordinatesCount++;
+        this.updateCoordinatesCount();
+        
+        if (window.coordinatesHistory) {
+            window.coordinatesHistory.addEntry(lat, lon, Date.now(), 'Маяк');
         }
     }
 
@@ -183,31 +132,50 @@ class MayakFinder {
         
         // Активируем кнопки
         document.getElementById('copyBtn').disabled = false;
-        document.getElementById('openNavBtn').disabled = false;
+        document.getElementById('openMapBtn').disabled = false;
         document.getElementById('lightOnBtn').disabled = false;
         document.getElementById('lightOffBtn').disabled = false;
         
         this.log('📍 Новые координаты: ' + coordsText);
-        this.updateMap(lat, lon);
+        this.updateMiniMap(lat, lon);
     }
 
-    updateMap(lat, lon) {
-        const mapContainer = document.getElementById('staticMap');
-        
-        if (window.offlineMap && window.offlineMap.isInitialized) {
-            window.offlineMap.addTargetMarker(lat, lon, 'Текущее положение маяка');
-            window.offlineMap.map.setView([lat, lon], 15);
+    updateMiniMap(lat, lon) {
+        if (!this.map) return;
+
+        // Очищаем старые маркеры
+        this.map.eachLayer(layer => {
+            if (layer instanceof L.Marker) {
+                this.map.removeLayer(layer);
+            }
+        });
+
+        // Добавляем новый маркер
+        L.marker([lat, lon])
+            .addTo(this.map)
+            .bindPopup(`🎯 Маяк<br>Ш: ${lat.toFixed(6)}<br>Д: ${lon.toFixed(6)}`)
+            .openPopup();
+
+        this.map.setView([lat, lon], 15);
+    }
+
+    openMap() {
+        if (this.latitude && this.longitude) {
+            const mapUrl = `map.html?lat=${this.latitude}&lon=${this.longitude}`;
+            
+            // Открываем в новом окне
+            const newWindow = window.open(mapUrl, 'mapWindow', 'width=800,height=600,scrollbars=yes');
+            
+            if (newWindow) {
+                this.log('🗺️ Карта открыта в новом окне');
+                newWindow.focus();
+            } else {
+                // Если popup заблокирован, открываем в этой же вкладке
+                window.location.href = mapUrl;
+            }
         } else {
-            mapContainer.innerHTML = `
-                <div class="map-content">
-                    <div style="font-size: 32px; margin-bottom: 10px;">🎯</div>
-                    <div class="coordinates-display">Ш: ${lat.toFixed(6)}</div>
-                    <div class="coordinates-display">Д: ${lon.toFixed(6)}</div>
-                    <div style="font-size: 12px; color: #666; margin-top: 10px;">
-                        ${new Date().toLocaleTimeString()}
-                    </div>
-                </div>
-            `;
+            this.log('❌ Нет координат для отображения на карте');
+            alert('Сначала получите координаты маяка');
         }
     }
 
@@ -216,7 +184,8 @@ class MayakFinder {
         
         try {
             this.log(on ? '💡 Включение света...' : '🔌 Выключение света...');
-            // Реализация отправки команды на устройство
+            // Здесь будет реальная команда BLE
+            await new Promise(resolve => setTimeout(resolve, 1000));
             this.log(on ? '✅ Свет включен' : '✅ Свет выключен');
         } catch (error) {
             this.log('❌ Ошибка управления светом: ' + error.message);
@@ -225,16 +194,14 @@ class MayakFinder {
 
     copyCoordinates() {
         if (this.latitude && this.longitude) {
-            const text = `${this.latitude},${this.longitude}`;
+            const text = `${this.latitude.toFixed(6)}, ${this.longitude.toFixed(6)}`;
             navigator.clipboard.writeText(text).then(() => {
-                this.log('✅ Координаты скопированы в буфер');
+                this.log('✅ Координаты скопированы');
                 
                 const btn = document.getElementById('copyBtn');
                 const originalText = btn.textContent;
                 btn.textContent = '✅ Скопировано!';
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                }, 2000);
+                setTimeout(() => btn.textContent = originalText, 2000);
             });
         }
     }
@@ -247,33 +214,20 @@ class MayakFinder {
         this.log('🧪 Используются тестовые данные');
     }
 
+    updateCoordinatesCount() {
+        document.getElementById('coordinatesCount').textContent = this.coordinatesCount;
+    }
+
     onDisconnected() {
         this.isConnected = false;
         this.updateConnectionStatus(false);
         this.log('🔴 Отключено от устройства');
-        
-        if (window.notificationManager) {
-            window.notificationManager.showConnectionNotification(false);
-        }
     }
 
     updateConnectionStatus(connected) {
         const status = document.getElementById('status');
         status.textContent = connected ? '✅ Подключено' : '❌ Не подключено';
         status.className = `status ${connected ? 'online' : 'offline'}`;
-        
-        document.getElementById('connectBtn').textContent = 
-            connected ? '🔗 Переподключиться' : '📡 Подключиться к Bluetooth';
-    }
-
-    updateOnlineStatus(online) {
-        const status = document.getElementById('onlineStatus');
-        status.textContent = online ? '🟢 Онлайн режим' : '🔴 Режим оффлайн';
-        status.className = `status ${online ? 'online' : 'offline'}`;
-    }
-
-    checkOnlineStatus() {
-        this.updateOnlineStatus(navigator.onLine);
     }
 
     log(message) {
@@ -283,7 +237,7 @@ class MayakFinder {
         entry.textContent = `[${timestamp}] ${message}`;
         logElement.prepend(entry);
         
-        while (logElement.children.length > 20) {
+        while (logElement.children.length > 10) {
             logElement.removeChild(logElement.lastChild);
         }
     }
@@ -324,47 +278,36 @@ class MayakFinder {
                 <div class="setting-item">
                     <div class="setting-label">Система единиц</div>
                     <select class="setting-control" id="unitsSelect">
-                        <option value="metric">Метрическая (км)</option>
-                        <option value="imperial">Имперская (мили)</option>
+                        <option value="metric">Метрическая (км/м)</option>
+                        <option value="imperial">Имперская (мили/футы)</option>
                     </select>
-                </div>
-            </div>
-
-            <div class="setting-group">
-                <h3>🔊 Голосовые подсказки</h3>
-                <div class="setting-item">
-                    <div class="setting-label">Включить голосовые подсказки</div>
-                    <label class="switch">
-                        <input type="checkbox" id="voiceGuidanceToggle">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-            </div>
-
-            <div class="setting-group">
-                <h3>🔔 Уведомления</h3>
-                <div class="setting-item">
-                    <div class="setting-label">Включить уведомления</div>
-                    <label class="switch">
-                        <input type="checkbox" id="notificationsToggle">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                <div class="setting-item">
-                    <div class="setting-label">Оповещение о приближении</div>
-                    <label class="switch">
-                        <input type="checkbox" id="proximityAlertToggle">
-                        <span class="slider"></span>
-                    </label>
                 </div>
             </div>
 
             <div class="setting-group">
                 <h3>🗺️ Карты</h3>
                 <div class="setting-item">
-                    <div class="setting-label">Оффлайн карты</div>
+                    <div class="setting-label">Автоматическое слежение</div>
                     <label class="switch">
-                        <input type="checkbox" id="offlineMapsToggle">
+                        <input type="checkbox" id="autoFollowToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-label">Показывать трек</div>
+                    <label class="switch">
+                        <input type="checkbox" id="showTrackToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <h3>⚡ Производительность</h3>
+                <div class="setting-item">
+                    <div class="setting-label">Высокая точность GPS</div>
+                    <label class="switch">
+                        <input type="checkbox" id="highAccuracyToggle" checked>
                         <span class="slider"></span>
                     </label>
                 </div>
@@ -373,6 +316,7 @@ class MayakFinder {
             <div class="setting-actions">
                 <button class="btn primary" onclick="app.saveSettings()">💾 Сохранить</button>
                 <button class="btn secondary" onclick="app.resetSettings()">🔄 Сбросить</button>
+                <button class="btn secondary" onclick="app.closeModal(document.getElementById('settingsModal'))">❌ Отмена</button>
             </div>
         `;
 
@@ -382,12 +326,12 @@ class MayakFinder {
     populateSettings() {
         if (!window.appSettings) return;
 
-        document.getElementById('themeSelect').value = window.appSettings.settings.theme;
-        document.getElementById('unitsSelect').value = window.appSettings.settings.units;
-        document.getElementById('voiceGuidanceToggle').checked = window.appSettings.settings.voiceGuidance;
-        document.getElementById('notificationsToggle').checked = window.appSettings.settings.notifications;
-        document.getElementById('proximityAlertToggle').checked = window.appSettings.settings.proximityAlert;
-        document.getElementById('offlineMapsToggle').checked = window.appSettings.settings.offlineTiles;
+        const settings = window.appSettings.settings;
+        document.getElementById('themeSelect').value = settings.theme || 'auto';
+        document.getElementById('unitsSelect').value = settings.units || 'metric';
+        document.getElementById('autoFollowToggle').checked = settings.autoFollow !== false;
+        document.getElementById('showTrackToggle').checked = settings.showTrack !== false;
+        document.getElementById('highAccuracyToggle').checked = settings.highAccuracy !== false;
     }
 
     saveSettings() {
@@ -395,31 +339,21 @@ class MayakFinder {
 
         window.appSettings.settings.theme = document.getElementById('themeSelect').value;
         window.appSettings.settings.units = document.getElementById('unitsSelect').value;
-        window.appSettings.settings.voiceGuidance = document.getElementById('voiceGuidanceToggle').checked;
-        window.appSettings.settings.notifications = document.getElementById('notificationsToggle').checked;
-        window.appSettings.settings.proximityAlert = document.getElementById('proximityAlertToggle').checked;
-        window.appSettings.settings.offlineTiles = document.getElementById('offlineMapsToggle').checked;
+        window.appSettings.settings.autoFollow = document.getElementById('autoFollowToggle').checked;
+        window.appSettings.settings.showTrack = document.getElementById('showTrackToggle').checked;
+        window.appSettings.settings.highAccuracy = document.getElementById('highAccuracyToggle').checked;
 
         if (window.appSettings.saveSettings()) {
             this.log('✅ Настройки сохранены');
             this.closeModal(document.getElementById('settingsModal'));
-            
-            if (window.voiceGuide) {
-                if (window.appSettings.settings.voiceGuidance) {
-                    window.voiceGuide.enable();
-                } else {
-                    window.voiceGuide.disable();
-                }
-            }
-        } else {
-            this.log('❌ Ошибка сохранения настроек');
         }
     }
 
     resetSettings() {
         if (window.appSettings) {
             window.appSettings.resetToDefaults();
-            this.log('✅ Настройки сброшены к значениям по умолчанию');
+            this.log('✅ Настройки сброшены');
+            this.loadSettingsUI();
         }
     }
 
@@ -427,7 +361,7 @@ class MayakFinder {
         const historyContent = document.getElementById('historyContent');
         if (!historyContent || !window.coordinatesHistory) return;
 
-        const history = window.coordinatesHistory.getRecentEntries(20);
+        const history = window.coordinatesHistory.getRecentEntries(15);
         
         let historyHTML = `
             <div class="history-actions">
@@ -446,7 +380,8 @@ class MayakFinder {
                 historyHTML += `
                     <div class="history-item" onclick="app.useHistoryEntry(${entry.latitude}, ${entry.longitude})">
                         <div><strong>${entry.name}</strong></div>
-                        <div class="history-coords">Ш: ${entry.latitude.toFixed(6)}, Д: ${entry.longitude.toFixed(6)}</div>
+                        <div class="history-coords">Ш: ${entry.latitude.toFixed(6)}</div>
+                        <div class="history-coords">Д: ${entry.longitude.toFixed(6)}</div>
                         <div class="history-time">${new Date(entry.timestamp).toLocaleString()}</div>
                     </div>
                 `;
@@ -482,34 +417,18 @@ class MayakFinder {
     }
 
     clearHistory() {
-        if (window.coordinatesHistory) {
-            if (confirm('Вы уверены, что хотите очистить всю историю?')) {
-                window.coordinatesHistory.clearHistory();
-                this.loadHistoryUI();
-                this.log('✅ История очищена');
-            }
+        if (window.coordinatesHistory && confirm('Очистить всю историю координат?')) {
+            window.coordinatesHistory.clearHistory();
+            this.loadHistoryUI();
+            this.log('✅ История очищена');
         }
     }
 }
 
-// Инициализация приложения
+// Глобальная переменная приложения
 let app;
 
+// Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
     app = new MayakFinder();
-    
-    // Инициализация оффлайн карт
-    if (window.offlineMap) {
-        setTimeout(() => {
-            const mapContainer = document.getElementById('map');
-            if (mapContainer) {
-                window.offlineMap.init('map', [55.241867, 72.908588], 10);
-            }
-        }, 500);
-    }
 });
-
-// Глобальные функции для вызова из HTML
-window.openNavigator = function() {
-    if (app) app.openNavigator();
-};
