@@ -5,15 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mayak Finder - Оффлайн</title>
     <meta name="theme-color" content="#667eea">
-    <meta name="description" content="Оффлайн приложение для поиска маяка по Bluetooth">
+    <meta name="description" content="Полностью оффлайн приложение для поиска маяка по Bluetooth">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
     <link rel="stylesheet" href="style.css">
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
-        /* Стиль для оффлайн-баннера */
         .offline-banner {
             position: fixed;
             top: 0;
@@ -25,25 +23,25 @@
             text-align: center;
             z-index: 10000;
             animation: slideDown 0.3s ease-out;
+            display: none;
+        }
+        
+        .online-banner {
+            background: #28a745;
         }
         
         @keyframes slideDown {
             from { transform: translateY(-100%); }
             to { transform: translateY(0); }
         }
-        
-        .online-banner {
-            background: #28a745;
-        }
     </style>
 </head>
 <body>
-    <div id="offlineBanner" class="offline-banner" style="display: none;">
-        🔴 Режим оффлайн - некоторые функции ограничены
+    <div id="offlineBanner" class="offline-banner">
+        🔴 Режим оффлайн - приложение работает локально
     </div>
 
     <div class="container">
-        <!-- Остальное содержимое без изменений -->
         <header class="app-header">
             <h1>🔍 Mayak Finder</h1>
             <button class="btn-icon" id="settingsBtn" title="Настройки">⚙️</button>
@@ -118,10 +116,11 @@
         </div>
     </div>
 
-    <!-- Подключаем скрипты -->
+    <!-- ПОДКЛЮЧАЕМ ВСЕ НЕОБХОДИМЫЕ СКРИПТЫ -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
+    <!-- ВАЖНО: все эти файлы необходимы для полной функциональности -->
     <script src="settings.js"></script>
     <script src="voice-guidance.js"></script>
     <script src="history-manager.js"></script>
@@ -130,25 +129,12 @@
     <script src="script.js"></script>
 
     <script>
-        // Регистрация Service Worker с улучшенной обработкой ошибок
+        // Регистрация Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
                 navigator.serviceWorker.register('sw.js')
                     .then(function(registration) {
-                        console.log('ServiceWorker зарегистрирован успешно:', registration.scope);
-                        
-                        // Проверяем наличие обновлений
-                        registration.addEventListener('updatefound', () => {
-                            const newWorker = registration.installing;
-                            console.log('Найдено обновление Service Worker');
-                            
-                            newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    console.log('Новая версия доступна!');
-                                    // Можно показать уведомление об обновлении
-                                }
-                            });
-                        });
+                        console.log('ServiceWorker зарегистрирован успешно');
                     })
                     .catch(function(error) {
                         console.log('Ошибка регистрации ServiceWorker:', error);
@@ -156,7 +142,7 @@
             });
         }
 
-        // Улучшенная обработка онлайн/оффлайн статуса
+        // Управление онлайн/оффлайн статусом
         function updateOnlineStatus() {
             const isOnline = navigator.onLine;
             const banner = document.getElementById('offlineBanner');
@@ -170,36 +156,12 @@
                 banner.style.display = 'block';
                 statusElement.textContent = '🔴 Режим оффлайн';
                 statusElement.className = 'status offline';
-                
-                // Показываем уведомление только при переходе в оффлайн
-                setTimeout(() => {
-                    banner.textContent = '🔴 Режим оффлайн - приложение работает локально';
-                }, 3000);
             }
         }
 
-        // Слушаем изменения статуса сети
         window.addEventListener('online', updateOnlineStatus);
         window.addEventListener('offline', updateOnlineStatus);
-        
-        // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', updateOnlineStatus);
-
-        // Предотвращаем свайп-обновление в оффлайн режиме
-        let touchStartY = 0;
-        
-        document.addEventListener('touchstart', function(e) {
-            touchStartY = e.touches[0].clientY;
-        });
-
-        document.addEventListener('touchmove', function(e) {
-            if (!navigator.onLine) {
-                // В оффлайн режиме блокируем стандартное поведение свайпа
-                if (touchStartY - e.touches[0].clientY > 50) {
-                    e.preventDefault();
-                }
-            }
-        });
     </script>
 </body>
 </html>
