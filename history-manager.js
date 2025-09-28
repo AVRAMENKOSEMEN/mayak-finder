@@ -1,4 +1,3 @@
-// history-manager.js - Менеджер истории координат
 class HistoryManager {
     constructor() {
         this.maxEntries = 100;
@@ -10,7 +9,6 @@ class HistoryManager {
             const saved = localStorage.getItem('coordinatesHistory');
             return saved ? JSON.parse(saved) : [];
         } catch (error) {
-            console.error('Ошибка загрузки истории:', error);
             return [];
         }
     }
@@ -29,19 +27,16 @@ class HistoryManager {
             latitude,
             longitude,
             timestamp,
-            name: name || `Точка ${this.history.length + 1}`,
-            address: '' // Можно добавить геокодирование позже
+            name: name || `Точка ${this.history.length + 1}`
         };
 
         this.history.unshift(entry);
         
-        // Ограничиваем размер истории
         if (this.history.length > this.maxEntries) {
             this.history = this.history.slice(0, this.maxEntries);
         }
 
         this.saveHistory();
-        this.updateUI();
         return entry;
     }
 
@@ -52,13 +47,15 @@ class HistoryManager {
     deleteEntry(id) {
         this.history = this.history.filter(entry => entry.id !== id);
         this.saveHistory();
-        this.updateUI();
     }
 
     clearHistory() {
         this.history = [];
         this.saveHistory();
-        this.updateUI();
+    }
+
+    getRecentEntries(limit = 10) {
+        return this.history.slice(0, limit);
     }
 
     exportToGPX() {
@@ -100,9 +97,9 @@ class HistoryManager {
     }
 
     exportToCSV() {
-        const headers = 'Имя,Широта,Долгота,Время,Адрес\n';
+        const headers = 'Имя,Широта,Долгота,Время\n';
         const rows = this.history.map(entry => 
-            `"${entry.name}",${entry.latitude},${entry.longitude},"${new Date(entry.timestamp).toLocaleString()}","${entry.address}"`
+            `"${entry.name}",${entry.latitude},${entry.longitude},"${new Date(entry.timestamp).toLocaleString()}"`
         ).join('\n');
         
         this.downloadFile(headers + rows, 'mayak-history.csv', 'text/csv');
@@ -132,25 +129,6 @@ class HistoryManager {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
     }
-
-    updateUI() {
-        // Обновляем UI если есть на странице
-        if (typeof updateHistoryList === 'function') {
-            updateHistoryList();
-        }
-    }
-
-    getRecentEntries(limit = 10) {
-        return this.history.slice(0, limit);
-    }
-
-    searchEntries(query) {
-        return this.history.filter(entry => 
-            entry.name.toLowerCase().includes(query.toLowerCase()) ||
-            entry.address.toLowerCase().includes(query.toLowerCase())
-        );
-    }
 }
 
-// Глобальный экземпляр
 window.coordinatesHistory = new HistoryManager();
