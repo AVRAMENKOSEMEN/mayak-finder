@@ -5,6 +5,7 @@ const urlsToCache = [
   './index.html',
   './map.html',
   './navigator.html',
+  './offline.html',
   './style.css',
   './script.js',
   './manifest.json',
@@ -100,3 +101,4 @@ self.addEventListener('sync', function(event) {
     console.log('Фоновая синхронизация...');
   }
 });
+
