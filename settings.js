@@ -2,11 +2,9 @@ class SettingsManager {
     constructor() {
         this.defaultSettings = {
             theme: 'auto',
-            units: 'metric',
-            autoFollow: true,
-            showTrack: true,
+            defaultMap: 'internal',
             highAccuracy: true,
-            mapType: 'osm'
+            showLocation: true
         };
         
         this.settings = this.loadSettings();
@@ -53,29 +51,25 @@ class SettingsManager {
         }
     }
 
-    convertDistance(km) {
-        if (this.settings.units === 'metric') {
-            if (km < 1) return { value: km * 1000, unit: 'м', text: Math.round(km * 1000) + ' м' };
-            return { value: km, unit: 'км', text: km.toFixed(2) + ' км' };
-        } else {
-            const miles = km * 0.621371;
-            if (miles < 0.5) return { value: miles * 5280, unit: 'фут', text: Math.round(miles * 5280) + ' фут' };
-            return { value: miles, unit: 'миль', text: miles.toFixed(2) + ' миль' };
-        }
-    }
-
-    convertSpeed(kmh) {
-        if (this.settings.units === 'metric') {
-            return { value: kmh, unit: 'км/ч', text: kmh.toFixed(1) + ' км/ч' };
-        } else {
-            const mph = kmh * 0.621371;
-            return { value: mph, unit: 'миль/ч', text: mph.toFixed(1) + ' миль/ч' };
-        }
-    }
-
     resetToDefaults() {
         this.settings = {...this.defaultSettings};
         this.saveSettings();
+    }
+
+    // Получить URL для выбранных карт
+    getMapUrl(lat, lon, mapType = null) {
+        const type = mapType || this.settings.defaultMap;
+        
+        const mapUrls = {
+            'google': `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`,
+            'yandex': `https://yandex.ru/maps/?text=${lat},${lon}`,
+            '2gis': `https://2gis.ru/geo/${lon},${lat}`,
+            'apple': `https://maps.apple.com/?q=${lat},${lon}`,
+            'osm': `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=15/${lat}/${lon}`,
+            'internal': `map.html?lat=${lat}&lon=${lon}`
+        };
+
+        return mapUrls[type] || mapUrls.internal;
     }
 }
 
