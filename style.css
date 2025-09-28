@@ -432,3 +432,25 @@ select {
     color: var(--text-color);
     font-size: 14px;
 }
+/* Добавьте в конец файла style.css */
+
+.target-marker {
+    font-size: 24px;
+    text-align: center;
+    animation: pulse 2s infinite;
+}
+
+.user-location-marker {
+    font-size: 20px;
+    text-align: center;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.leaflet-container {
+    background: #f8f9fa;
+}
