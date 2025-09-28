@@ -1,4 +1,4 @@
-// Основной скрипт приложения с новыми функциями
+// Основной скрипт приложения - ИСПРАВЛЕННАЯ ВЕРСИЯ
 class MayakFinder {
     constructor() {
         this.latitude = null;
@@ -15,13 +15,16 @@ class MayakFinder {
         this.checkOnlineStatus();
         this.loadSettingsUI();
         this.loadHistoryUI();
+        
+        // Инициализация оффлайн карт
+        this.initOfflineMap();
     }
 
     bindEvents() {
         // Основные кнопки
         document.getElementById('connectBtn').addEventListener('click', () => this.connectBluetooth());
         document.getElementById('copyBtn').addEventListener('click', () => this.copyCoordinates());
-        document.getElementById('openNavBtn').addEventListener('click', () => this.openMaps());
+        document.getElementById('openNavBtn').addEventListener('click', () => this.openNavigator()); // ИСПРАВЛЕНО
         document.getElementById('testBtn').addEventListener('click', () => this.useTestData());
         
         // Управление светом
@@ -49,6 +52,113 @@ class MayakFinder {
         window.addEventListener('offline', () => this.updateOnlineStatus(false));
     }
 
+    initOfflineMap() {
+        // Инициализация карты только если контейнер существует
+        const mapContainer = document.getElementById('map');
+        if (mapContainer && window.offlineMap) {
+            setTimeout(() => {
+                window.offlineMap.init('map', [55.241867, 72.908588], 10)
+                    .then(success => {
+                        if (success) {
+                            console.log('Оффлайн карта инициализирована');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Ошибка инициализации карты:', error);
+                    });
+            }, 1000);
+        }
+    }
+
+    // ИСПРАВЛЕННЫЙ МЕТОД - открытие навигатора
+    openNavigator() {
+        if (this.latitude && this.longitude) {
+            // Проверяем, существует ли файл navigator.html
+            this.checkNavigatorFile()
+                .then(() => {
+                    // Открываем навигатор в новом окне
+                    const navUrl = `navigator.html?lat=${this.latitude}&lon=${this.longitude}`;
+                    window.open(navUrl, '_blank');
+                    this.log('🧭 Навигатор открыт');
+                })
+                .catch(error => {
+                    this.log('❌ Ошибка открытия навигатора: ' + error.message);
+                    this.fallbackNavigation();
+                });
+        } else {
+            this.log('❌ Нет координат для навигации');
+            alert('Сначала получите координаты маяка');
+        }
+    }
+
+    // Проверка доступности файла навигатора
+    async checkNavigatorFile() {
+        return new Promise((resolve, reject) => {
+            fetch('navigator.html')
+                .then(response => {
+                    if (response.ok) {
+                        resolve();
+                    } else {
+                        reject(new Error('Файл навигатора не найден'));
+                    }
+                })
+                .catch(error => {
+                    reject(new Error('Ошибка загрузки навигатора'));
+                });
+        });
+    }
+
+    // Резервный вариант навигации
+    fallbackNavigation() {
+        if (this.latitude && this.longitude) {
+            // Пробуем открыть через Google Maps
+            const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${this.latitude},${this.longitude}&travelmode=walking`;
+            window.open(mapsUrl, '_blank');
+            this.log('🗺️ Открыт резервный навигатор (Google Maps)');
+        }
+    }
+
+    // ИСПРАВЛЕННЫЙ МЕТОД - открытие карт
+    openMaps() {
+        if (this.latitude && this.longitude) {
+            this.checkMapFile()
+                .then(() => {
+                    const mapUrl = `map.html?lat=${this.latitude}&lon=${this.longitude}`;
+                    window.open(mapUrl, '_blank');
+                    this.log('🗺️ Карта открыта');
+                })
+                .catch(error => {
+                    this.log('❌ Ошибка открытия карты: ' + error.message);
+                    this.fallbackMap();
+                });
+        }
+    }
+
+    async checkMapFile() {
+        return new Promise((resolve, reject) => {
+            fetch('map.html')
+                .then(response => {
+                    if (response.ok) {
+                        resolve();
+                    } else {
+                        reject(new Error('Файл карты не найден'));
+                    }
+                })
+                .catch(error => {
+                    reject(new Error('Ошибка загрузки карты'));
+                });
+        });
+    }
+
+    fallbackMap() {
+        if (this.latitude && this.longitude) {
+            // Простая карта через Google
+            const mapUrl = `https://maps.google.com/maps?q=${this.latitude},${this.longitude}&z=15`;
+            window.open(mapUrl, '_blank');
+        }
+    }
+
+    // ОСТАЛЬНЫЕ МЕТОДЫ БЕЗ ИЗМЕНЕНИЙ
     async connectBluetooth() {
         try {
             this.log('🔵 Поиск Bluetooth устройств...');
@@ -71,13 +181,11 @@ class MayakFinder {
             const server = await this.device.gatt.connect();
             this.log('✅ Подключено к GATT серверу');
 
-            // Здесь должна быть логика работы с вашим BLE устройством
             await this.setupBluetoothServices(server);
             
             this.isConnected = true;
             this.updateConnectionStatus(true);
             
-            // Уведомление о подключении
             if (window.notificationManager) {
                 window.notificationManager.showConnectionNotification(true, this.device.name);
             }
@@ -89,13 +197,11 @@ class MayakFinder {
     }
 
     async setupBluetoothServices(server) {
-        // Пример реализации для nrf52840
-        // Замените на реальные UUID вашего устройства
         try {
+            // ЗАМЕНИТЕ НА РЕАЛЬНЫЕ UUID ВАШЕГО УСТРОЙСТВА
             const service = await server.getPrimaryService('12345678-1234-5678-9abc-123456789abc');
             const characteristic = await service.getCharacteristic('12345678-1234-5678-9abc-123456789abd');
             
-            // Подписка на получение данных
             await characteristic.startNotifications();
             characteristic.addEventListener('characteristicvaluechanged', 
                 (event) => this.handleData(event.target.value));
@@ -107,8 +213,6 @@ class MayakFinder {
     }
 
     handleData(data) {
-        // Обработка данных от BLE устройства
-        // Предполагаем, что данные приходят в формате "lat,lon"
         try {
             const textDecoder = new TextDecoder();
             const coordinates = textDecoder.decode(data).split(',');
@@ -120,12 +224,10 @@ class MayakFinder {
                 if (!isNaN(lat) && !isNaN(lon)) {
                     this.updateCoordinates(lat, lon);
                     
-                    // Добавляем в историю
                     if (window.coordinatesHistory) {
                         window.coordinatesHistory.addEntry(lat, lon);
                     }
                     
-                    // Уведомление о новых координатах
                     if (window.notificationManager) {
                         window.notificationManager.showNewCoordinateAlert({lat, lon});
                     }
@@ -145,7 +247,7 @@ class MayakFinder {
         
         // Активируем кнопки
         document.getElementById('copyBtn').disabled = false;
-        document.getElementById('openNavBtn').disabled = false;
+        document.getElementById('openNavBtn').disabled = false; // ИСПРАВЛЕНО
         document.getElementById('lightOnBtn').disabled = false;
         document.getElementById('lightOffBtn').disabled = false;
         
@@ -156,12 +258,10 @@ class MayakFinder {
     updateMap(lat, lon) {
         const mapContainer = document.getElementById('staticMap');
         
-        // Используем оффлайн карты если инициализированы
         if (window.offlineMap && window.offlineMap.isInitialized) {
             window.offlineMap.addTargetMarker(lat, lon, 'Текущее положение маяка');
             window.offlineMap.map.setView([lat, lon], 15);
         } else {
-            // Простое отображение координат
             mapContainer.innerHTML = `
                 <div class="map-content">
                     <div style="font-size: 32px; margin-bottom: 10px;">🎯</div>
@@ -179,12 +279,8 @@ class MayakFinder {
         if (!this.device || !this.isConnected) return;
         
         try {
-            // Логика управления светом через BLE
             this.log(on ? '💡 Включение света...' : '🔌 Выключение света...');
-            
             // Реализация отправки команды на устройство
-            // await this.sendLightCommand(on);
-            
             this.log(on ? '✅ Свет включен' : '✅ Свет выключен');
         } catch (error) {
             this.log('❌ Ошибка управления светом: ' + error.message);
@@ -197,7 +293,6 @@ class MayakFinder {
             navigator.clipboard.writeText(text).then(() => {
                 this.log('✅ Координаты скопированы в буфер');
                 
-                // Визуальное подтверждение
                 const btn = document.getElementById('copyBtn');
                 const originalText = btn.textContent;
                 btn.textContent = '✅ Скопировано!';
@@ -208,14 +303,7 @@ class MayakFinder {
         }
     }
 
-    openMaps() {
-        if (this.latitude && this.longitude) {
-            window.open(`map.html?lat=${this.latitude}&lon=${this.longitude}`, '_blank');
-        }
-    }
-
     useTestData() {
-        // Тестовые координаты (Омск)
         const testLat = 55.241867 + (Math.random() - 0.5) * 0.01;
         const testLon = 72.908588 + (Math.random() - 0.5) * 0.01;
         
@@ -259,13 +347,12 @@ class MayakFinder {
         entry.textContent = `[${timestamp}] ${message}`;
         logElement.prepend(entry);
         
-        // Ограничиваем размер лога
         while (logElement.children.length > 20) {
             logElement.removeChild(logElement.lastChild);
         }
     }
 
-    // Новые функции для настроек и истории
+    // Настройки и история (без изменений)
     showSettings() {
         this.loadSettingsUI();
         document.getElementById('settingsModal').style.display = 'block';
@@ -354,7 +441,6 @@ class MayakFinder {
             </div>
         `;
 
-        // Заполняем текущие настройки
         this.populateSettings();
     }
 
@@ -383,7 +469,6 @@ class MayakFinder {
             this.log('✅ Настройки сохранены');
             this.closeModal(document.getElementById('settingsModal'));
             
-            // Применяем настройки голосовых подсказок
             if (window.voiceGuide) {
                 if (window.appSettings.settings.voiceGuidance) {
                     window.voiceGuide.enable();
@@ -477,11 +562,6 @@ let app;
 
 document.addEventListener('DOMContentLoaded', () => {
     app = new MayakFinder();
-    
-    // Инициализация оффлайн карт
-    if (window.offlineMap) {
-        window.offlineMap.init('map', [55.241867, 72.908588], 10);
-    }
 });
 
 // Глобальные функции для вызова из HTML
@@ -489,12 +569,6 @@ window.openMaps = function() {
     if (app) app.openMaps();
 };
 
-window.openSmartMap = function(lat, lon) {
-    // Умное открытие карт (существующая логика)
-    const googleUrl = `https://www.google.com/maps/@${lat},${lon},17z`;
-    const yandexUrl = `https://yandex.ru/maps/?pt=${lon},${lat}&z=17`;
-    const osmUrl = `https://www.openstreetmap.org/#map=17/${lat}/${lon}`;
-    const offlineUrl = `navigator.html?lat=${lat}&lon=${lon}`;
-
-    // ... существующая логика тестирования доступности карт
+window.openNavigator = function() {
+    if (app) app.openNavigator();
 };
