@@ -1,29 +1,12 @@
-// settings.js - Система настроек приложения
 class SettingsManager {
     constructor() {
         this.defaultSettings = {
-            // Единицы измерения
-            units: 'metric', // 'metric' или 'imperial'
-            
-            // Тема
-            theme: 'auto', // 'light', 'dark', 'auto'
-            
-            // Голосовые подсказки
-            voiceGuidance: false,
-            voiceVolume: 0.8,
-            
-            // Уведомления
-            notifications: true,
-            proximityAlert: true,
-            proximityDistance: 0.1, // км
-            
-            // Карты
-            defaultMap: 'auto',
-            offlineTiles: true,
-            
-            // Навигация
-            compassCalibration: true,
-            highAccuracy: true
+            theme: 'auto',
+            units: 'metric',
+            autoFollow: true,
+            showTrack: true,
+            highAccuracy: true,
+            mapType: 'osm'
         };
         
         this.settings = this.loadSettings();
@@ -33,11 +16,9 @@ class SettingsManager {
     loadSettings() {
         try {
             const saved = localStorage.getItem('appSettings');
-            const loaded = saved ? JSON.parse(saved) : {};
-            return { ...this.defaultSettings, ...loaded };
+            return saved ? {...this.defaultSettings, ...JSON.parse(saved)} : {...this.defaultSettings};
         } catch (error) {
-            console.error('Ошибка загрузки настроек:', error);
-            return { ...this.defaultSettings };
+            return {...this.defaultSettings};
         }
     }
 
@@ -47,15 +28,12 @@ class SettingsManager {
             this.applySettings();
             return true;
         } catch (error) {
-            console.error('Ошибка сохранения настроек:', error);
             return false;
         }
     }
 
     applySettings() {
         this.applyTheme();
-        this.applyUnits();
-        this.applyNotifications();
     }
 
     applyTheme() {
@@ -68,90 +46,37 @@ class SettingsManager {
 
         document.documentElement.setAttribute('data-theme', actualTheme);
         
-        // Обновляем мета-тег theme-color
         const themeColor = actualTheme === 'dark' ? '#2d3748' : '#667eea';
-        document.querySelector('meta[name="theme-color"]').setAttribute('content', themeColor);
-    }
-
-    applyUnits() {
-        // Единицы будут применяться в навигаторе
-        if (typeof updateUnitsDisplay === 'function') {
-            updateUnitsDisplay();
+        const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+        if (metaThemeColor) {
+            metaThemeColor.setAttribute('content', themeColor);
         }
     }
 
-    applyNotifications() {
-        if (this.settings.notifications && 'Notification' in window) {
-            this.requestNotificationPermission();
-        }
-    }
-
-    async requestNotificationPermission() {
-        if (Notification.permission === 'default') {
-            await Notification.requestPermission();
-        }
-    }
-
-    showNotification(title, options = {}) {
-        if (!this.settings.notifications || Notification.permission !== 'granted') {
-            return;
-        }
-
-        const notification = new Notification(title, {
-            icon: '/icons/icon-192.png',
-            badge: '/icons/icon-72.png',
-            ...options
-        });
-
-        notification.onclick = () => {
-            window.focus();
-            notification.close();
-        };
-
-        setTimeout(() => notification.close(), 5000);
-    }
-
-    // Геттеры для удобства
-    get isMetric() {
-        return this.settings.units === 'metric';
-    }
-
-    get isDarkTheme() {
-        return document.documentElement.getAttribute('data-theme') === 'dark';
-    }
-
-    // Конвертация единиц
     convertDistance(km) {
-        if (this.isMetric) {
-            return { value: km, unit: 'km', text: `${km.toFixed(1)} км` };
+        if (this.settings.units === 'metric') {
+            if (km < 1) return { value: km * 1000, unit: 'м', text: Math.round(km * 1000) + ' м' };
+            return { value: km, unit: 'км', text: km.toFixed(2) + ' км' };
         } else {
             const miles = km * 0.621371;
-            return { value: miles, unit: 'mi', text: `${miles.toFixed(1)} миль` };
+            if (miles < 0.5) return { value: miles * 5280, unit: 'фут', text: Math.round(miles * 5280) + ' фут' };
+            return { value: miles, unit: 'миль', text: miles.toFixed(2) + ' миль' };
         }
     }
 
     convertSpeed(kmh) {
-        if (this.isMetric) {
-            return { value: kmh, unit: 'km/h', text: `${kmh.toFixed(0)} км/ч` };
+        if (this.settings.units === 'metric') {
+            return { value: kmh, unit: 'км/ч', text: kmh.toFixed(1) + ' км/ч' };
         } else {
             const mph = kmh * 0.621371;
-            return { value: mph, unit: 'mph', text: `${mph.toFixed(0)} миль/ч` };
+            return { value: mph, unit: 'миль/ч', text: mph.toFixed(1) + ' миль/ч' };
         }
     }
 
     resetToDefaults() {
-        this.settings = { ...this.defaultSettings };
+        this.settings = {...this.defaultSettings};
         this.saveSettings();
-        location.reload();
     }
 }
 
-// Глобальный экземпляр
 window.appSettings = new SettingsManager();
-
-// Слушаем изменения системной темы
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-    if (window.appSettings.settings.theme === 'auto') {
-        window.appSettings.applyTheme();
-    }
-});
