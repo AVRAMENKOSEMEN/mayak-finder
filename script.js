@@ -15,9 +15,6 @@ class MayakFinder {
         this.checkOnlineStatus();
         this.loadSettingsUI();
         this.loadHistoryUI();
-        
-        // Инициализация оффлайн карт
-        this.initOfflineMap();
     }
 
     bindEvents() {
@@ -40,125 +37,64 @@ class MayakFinder {
             btn.addEventListener('click', (e) => this.closeModal(e.target.closest('.modal')));
         });
 
-        // Закрытие модальных окон по клику вне области
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) this.closeModal(modal);
             });
         });
 
-        // События онлайн/оффлайн
         window.addEventListener('online', () => this.updateOnlineStatus(true));
         window.addEventListener('offline', () => this.updateOnlineStatus(false));
     }
 
-    initOfflineMap() {
-        // Инициализация карты только если контейнер существует
-        const mapContainer = document.getElementById('map');
-        if (mapContainer && window.offlineMap) {
-            setTimeout(() => {
-                window.offlineMap.init('map', [55.241867, 72.908588], 10)
-                    .then(success => {
-                        if (success) {
-                            console.log('Оффлайн карта инициализирована');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Ошибка инициализации карты:', error);
-                    });
-            }, 1000);
-        }
-    }
-
     // ИСПРАВЛЕННЫЙ МЕТОД - открытие навигатора
     openNavigator() {
+        console.log('🔄 Попытка открыть навигатор...');
+        
         if (this.latitude && this.longitude) {
-            // Проверяем, существует ли файл navigator.html
-            this.checkNavigatorFile()
-                .then(() => {
-                    // Открываем навигатор в новом окне
-                    const navUrl = `navigator.html?lat=${this.latitude}&lon=${this.longitude}`;
-                    window.open(navUrl, '_blank');
+            const navUrl = `navigator.html?lat=${this.latitude}&lon=${this.longitude}`;
+            console.log('📍 URL навигатора:', navUrl);
+            
+            // Пробуем открыть в новом окне/вкладке
+            try {
+                const newWindow = window.open(navUrl, '_blank');
+                
+                if (newWindow) {
+                    console.log('✅ Навигатор открыт в новом окне');
                     this.log('🧭 Навигатор открыт');
-                })
-                .catch(error => {
-                    this.log('❌ Ошибка открытия навигатора: ' + error.message);
-                    this.fallbackNavigation();
-                });
+                    
+                    // Фокус на новое окно
+                    setTimeout(() => {
+                        if (newWindow) {
+                            newWindow.focus();
+                        }
+                    }, 100);
+                } else {
+                    // Если браузер заблокировал popup, открываем в текущем окне
+                    console.log('⚠️ Popup заблокирован, открываем в текущем окне');
+                    window.location.href = navUrl;
+                }
+            } catch (error) {
+                console.error('❌ Ошибка открытия навигатора:', error);
+                this.fallbackNavigation();
+            }
         } else {
             this.log('❌ Нет координат для навигации');
-            alert('Сначала получите координаты маяка');
+            alert('Сначала получите координаты маяка (используйте тестовые данные или подключите Bluetooth)');
         }
-    }
-
-    // Проверка доступности файла навигатора
-    async checkNavigatorFile() {
-        return new Promise((resolve, reject) => {
-            fetch('navigator.html')
-                .then(response => {
-                    if (response.ok) {
-                        resolve();
-                    } else {
-                        reject(new Error('Файл навигатора не найден'));
-                    }
-                })
-                .catch(error => {
-                    reject(new Error('Ошибка загрузки навигатора'));
-                });
-        });
     }
 
     // Резервный вариант навигации
     fallbackNavigation() {
         if (this.latitude && this.longitude) {
-            // Пробуем открыть через Google Maps
-            const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${this.latitude},${this.longitude}&travelmode=walking`;
-            window.open(mapsUrl, '_blank');
-            this.log('🗺️ Открыт резервный навигатор (Google Maps)');
+            // Пробуем открыть через универсальную ссылку
+            const universalUrl = `https://www.openstreetmap.org/?mlat=${this.latitude}&mlon=${this.longitude}#map=15/${this.latitude}/${this.longitude}`;
+            window.open(universalUrl, '_blank');
+            this.log('🗺️ Открыт резервный навигатор (OpenStreetMap)');
         }
     }
 
-    // ИСПРАВЛЕННЫЙ МЕТОД - открытие карт
-    openMaps() {
-        if (this.latitude && this.longitude) {
-            this.checkMapFile()
-                .then(() => {
-                    const mapUrl = `map.html?lat=${this.latitude}&lon=${this.longitude}`;
-                    window.open(mapUrl, '_blank');
-                    this.log('🗺️ Карта открыта');
-                })
-                .catch(error => {
-                    this.log('❌ Ошибка открытия карты: ' + error.message);
-                    this.fallbackMap();
-                });
-        }
-    }
-
-    async checkMapFile() {
-        return new Promise((resolve, reject) => {
-            fetch('map.html')
-                .then(response => {
-                    if (response.ok) {
-                        resolve();
-                    } else {
-                        reject(new Error('Файл карты не найден'));
-                    }
-                })
-                .catch(error => {
-                    reject(new Error('Ошибка загрузки карты'));
-                });
-        });
-    }
-
-    fallbackMap() {
-        if (this.latitude && this.longitude) {
-            // Простая карта через Google
-            const mapUrl = `https://maps.google.com/maps?q=${this.latitude},${this.longitude}&z=15`;
-            window.open(mapUrl, '_blank');
-        }
-    }
-
-    // ОСТАЛЬНЫЕ МЕТОДЫ БЕЗ ИЗМЕНЕНИЙ
+    // Остальные методы остаются без изменений
     async connectBluetooth() {
         try {
             this.log('🔵 Поиск Bluetooth устройств...');
@@ -247,7 +183,7 @@ class MayakFinder {
         
         // Активируем кнопки
         document.getElementById('copyBtn').disabled = false;
-        document.getElementById('openNavBtn').disabled = false; // ИСПРАВЛЕНО
+        document.getElementById('openNavBtn').disabled = false;
         document.getElementById('lightOnBtn').disabled = false;
         document.getElementById('lightOffBtn').disabled = false;
         
@@ -352,7 +288,6 @@ class MayakFinder {
         }
     }
 
-    // Настройки и история (без изменений)
     showSettings() {
         this.loadSettingsUI();
         document.getElementById('settingsModal').style.display = 'block';
@@ -562,13 +497,19 @@ let app;
 
 document.addEventListener('DOMContentLoaded', () => {
     app = new MayakFinder();
+    
+    // Инициализация оффлайн карт
+    if (window.offlineMap) {
+        setTimeout(() => {
+            const mapContainer = document.getElementById('map');
+            if (mapContainer) {
+                window.offlineMap.init('map', [55.241867, 72.908588], 10);
+            }
+        }, 500);
+    }
 });
 
 // Глобальные функции для вызова из HTML
-window.openMaps = function() {
-    if (app) app.openMaps();
-};
-
 window.openNavigator = function() {
     if (app) app.openNavigator();
 };
