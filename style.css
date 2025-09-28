@@ -454,3 +454,37 @@ select {
 .leaflet-container {
     background: #f8f9fa;
 }
+/* Добавьте в конец style.css */
+.target-marker, .user-marker {
+    text-align: center;
+    line-height: 1;
+    background: none;
+    border: none;
+}
+
+.target-marker {
+    font-size: 24px;
+    animation: pulse 2s infinite;
+}
+
+.user-marker {
+    font-size: 20px;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Стили для кнопок карт */
+.map-buttons {
+    display: flex;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.map-buttons .btn {
+    flex: 1;
+    margin-bottom: 0;
+}
