@@ -1,12 +1,12 @@
 {
   "name": "Mayak Finder - Оффлайн навигатор",
   "short_name": "MayakFinder",
-  "description": "Оффлайн приложение для поиска маяка по Bluetooth с голосовыми подсказками и картами",
+  "description": "Полностью оффлайн приложение для поиска маяков с GPS навигацией",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#667eea",
   "theme_color": "#764ba2",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "categories": ["navigation", "utilities"],
   "lang": "ru",
   "scope": "/",
@@ -22,12 +22,5 @@
       "type": "image/svg+xml"
     }
   ],
-  "screenshots": [
-    {
-      "src": "screenshots/screenshot1.png",
-      "sizes": "400x800",
-      "type": "image/png",
-      "form_factor": "narrow"
-    }
-  ]
+  "offline_enabled": true
 }
