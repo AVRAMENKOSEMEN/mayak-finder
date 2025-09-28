@@ -9,10 +9,15 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
     <link rel="stylesheet" href="style.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
     <div class="container">
-        <h1>🔍 Mayak Finder</h1>
+        <header class="app-header">
+            <h1>🔍 Mayak Finder</h1>
+            <button class="btn-icon" id="settingsBtn" title="Настройки">⚙️</button>
+        </header>
         
         <div id="onlineStatus" class="status offline">
             🔴 Режим оффлайн
@@ -36,6 +41,7 @@
                 <button id="lightOffBtn" class="btn warning" disabled>🔌 Выключить свет</button>
             </div>
             
+            <button id="historyBtn" class="btn secondary">📊 История координат</button>
             <button id="testBtn" class="btn secondary">🧪 Тестовые данные</button>
         </div>
 
@@ -57,6 +63,40 @@
         </div>
     </div>
 
+    <!-- Модальные окна -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Настройки</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="settingsContent">
+                <!-- Настройки будут загружены динамически -->
+            </div>
+        </div>
+    </div>
+
+    <div id="historyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📊 История координат</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="historyContent">
+                <!-- История будет загружена динамически -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Подключаем скрипты -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <script src="settings.js"></script>
+    <script src="voice-guidance.js"></script>
+    <script src="history-manager.js"></script>
+    <script src="notifications.js"></script>
+    <script src="offline-maps.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
