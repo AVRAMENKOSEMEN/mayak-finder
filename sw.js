@@ -1,5 +1,5 @@
-// Service Worker для оффлайн работы - ИСПРАВЛЕННАЯ ВЕРСИЯ
-const CACHE_NAME = 'mayak-finder-offline-v2';
+// Service Worker для полной оффлайн работы - ПОЛНАЯ ВЕРСИЯ
+const CACHE_NAME = 'mayak-finder-offline-v4';
 const urlsToCache = [
   './',
   './index.html',
@@ -9,26 +9,41 @@ const urlsToCache = [
   './style.css',
   './script.js',
   './manifest.json',
-  './voice-guidance.js',
-  './history-manager.js',
+  
+  // ВАЖНО: добавляем все наши скрипты
   './settings.js',
+  './voice-guidance.js', 
+  './history-manager.js',
   './notifications.js',
   './offline-maps.js'
+];
+
+const externalResources = [
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'
 ];
 
 self.addEventListener('install', function(event) {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(function(cache) {
-        console.log('Кэширование файлов для оффлайн работы');
+        console.log('Кэширование всех файлов приложения...');
         return cache.addAll(urlsToCache);
       })
+      .then(function() {
+        return caches.open(CACHE_NAME + '-external');
+      })
+      .then(function(cache) {
+        console.log('Кэширование внешних ресурсов...');
+        return cache.addAll(externalResources);
+      })
       .then(() => {
-        console.log('Все файлы закэшированы');
+        console.log('✅ Все ресурсы закэшированы для оффлайн работы');
         return self.skipWaiting();
       })
       .catch(error => {
-        console.error('Ошибка кэширования:', error);
+        console.error('❌ Ошибка кэширования:', error);
       })
   );
 });
@@ -38,24 +53,21 @@ self.addEventListener('activate', function(event) {
     caches.keys().then(function(cacheNames) {
       return Promise.all(
         cacheNames.map(function(cacheName) {
-          if (cacheName !== CACHE_NAME) {
+          if (cacheName !== CACHE_NAME && cacheName !== CACHE_NAME + '-external') {
             console.log('Удаляем старый кэш:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
     }).then(() => {
-      console.log('Service Worker активирован');
+      console.log('✅ Service Worker активирован');
       return self.clients.claim();
     })
   );
 });
 
 self.addEventListener('fetch', function(event) {
-  // Пропускаем не-GET запросы и chrome-extension
-  if (event.request.method !== 'GET' || event.request.url.startsWith('chrome-extension://')) {
-    return;
-  }
+  if (event.request.method !== 'GET') return;
 
   event.respondWith(
     caches.match(event.request)
@@ -65,40 +77,52 @@ self.addEventListener('fetch', function(event) {
           return response;
         }
 
-        // Для навигационных запросов (HTML страницы) всегда возвращаем index.html
+        // Для навигационных запросов
         if (event.request.mode === 'navigate') {
           return caches.match('./index.html');
         }
 
-        // Для остальных запросов пробуем сеть, а если нет интернета - показываем ошибку
-        return fetch(event.request).catch(error => {
-          // Для API запросов возвращаем ошибку
-          if (event.request.url.includes('/api/')) {
-            return new Response(JSON.stringify({ error: 'Оффлайн режим' }), {
-              status: 503,
-              headers: { 'Content-Type': 'application/json' }
+        // Пробуем сеть
+        return fetch(event.request)
+          .then(function(networkResponse) {
+            // Кэшируем успешные ответы
+            if (networkResponse.ok) {
+              const responseClone = networkResponse.clone();
+              caches.open(CACHE_NAME + '-external')
+                .then(function(cache) {
+                  cache.put(event.request, responseClone);
+                });
+            }
+            return networkResponse;
+          })
+          .catch(function() {
+            // Обработка оффлайн режима
+            if (event.request.destination === 'style') {
+              return new Response('', { 
+                status: 200, 
+                headers: { 'Content-Type': 'text/css' } 
+              });
+            }
+            
+            if (event.request.destination === 'script') {
+              return new Response('console.log("Оффлайн режим");', { 
+                status: 200, 
+                headers: { 'Content-Type': 'application/javascript' } 
+              });
+            }
+            
+            if (event.request.destination === 'image') {
+              return new Response(
+                'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>',
+                { headers: { 'Content-Type': 'image/svg+xml' } }
+              );
+            }
+            
+            return new Response('Оффлайн режим', { 
+              status: 200, 
+              statusText: 'Offline' 
             });
-          }
-          
-          // Для изображений и других ресурсов возвращаем пустой ответ
-          if (event.request.destination === 'image') {
-            return new Response('', { status: 404 });
-          }
-          
-          // Для скриптов и стилей возвращаем пустой ответ
-          return new Response('', { 
-            status: 404,
-            statusText: 'Оффлайн режим'
           });
-        });
       })
   );
 });
-
-// Фоновая синхронизация (если нужна)
-self.addEventListener('sync', function(event) {
-  if (event.tag === 'background-sync') {
-    console.log('Фоновая синхронизация...');
-  }
-});
-
