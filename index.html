@@ -34,6 +34,7 @@
         <div class="actions">
             <button id="copyBtn" class="btn secondary" disabled>📋 Копировать координаты</button>
             <button id="openMapBtn" class="btn secondary" disabled>🗺️ Открыть карту</button>
+            <button id="openExternalBtn" class="btn secondary" disabled>🌍 Открыть в картах</button>
             
             <div class="light-controls">
                 <button id="lightOnBtn" class="btn success" disabled>💡 Включить свет</button>
@@ -98,12 +99,8 @@
     <script src="script.js"></script>
 
     <script>
-        // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', function() {
-            // Запускаем отсчет времени работы
             startUptimeCounter();
-            
-            // Обновляем онлайн статус
             updateOnlineStatus();
         });
 
