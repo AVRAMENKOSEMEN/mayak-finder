@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mayak Finder - Оффлайн</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .offline-container {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            max-width: 400px;
+        }
+        
+        .offline-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+        
+        p {
+            margin-bottom: 20px;
+            line-height: 1.5;
+            opacity: 0.9;
+        }
+        
+        .features {
+            text-align: left;
+            margin: 20px 0;
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .feature {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .feature-icon {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        
+        button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+            transition: transform 0.3s ease;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">🌐</div>
+        <h1>Режим оффлайн</h1>
+        <p>Нет подключения к интернету, но приложение работает в ограниченном режиме</p>
+        
+        <div class="features">
+            <div class="feature">
+                <span class="feature-icon">📡</span>
+                Подключение к Bluetooth маякам
+            </div>
+            <div class="feature">
+                <span class="feature-icon">🧭</span>
+                Оффлайн навигация и компас
+            </div>
+            <div class="feature">
+                <span class="feature-icon">🗺️</span>
+                Просмотр сохраненных карт
+            </div>
+            <div class="feature">
+                <span class="feature-icon">💾</span>
+                Работа с историей координат
+            </div>
+        </div>
+        
+        <div class="buttons">
+            <button onclick="goHome()">🏠 На главную</button>
+            <button onclick="retryConnection()">🔄 Повторить</button>
+        </div>
+        
+        <p style="margin-top: 20px; font-size: 12px; opacity: 0.7;">
+            Приложение будет полностью работать после восстановления связи
+        </p>
+    </div>
+
+    <script>
+        function goHome() {
+            // Пробуем вернуться на главную
+            if (caches) {
+                caches.match('./index.html')
+                    .then(response => {
+                        if (response) {
+                            window.location.href = './index.html';
+                        } else {
+                            window.location.reload();
+                        }
+                    })
+                    .catch(() => window.location.reload());
+            } else {
+                window.location.reload();
+            }
+        }
+        
+        function retryConnection() {
+            if (navigator.onLine) {
+                window.location.reload();
+            } else {
+                alert('Интернет соединение все еще отсутствует');
+            }
+        }
+        
+        // Автоматическая проверка соединения
+        window.addEventListener('online', () => {
+            window.location.reload();
+        });
+        
+        // Попытка вернуться назад через 5 секунд
+        setTimeout(() => {
+            if (!navigator.onLine) {
+                document.body.innerHTML += `
+                    <div style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); 
+                               background: rgba(0,0,0,0.8); padding: 10px 20px; border-radius: 20px;">
+                        <button onclick="goHome()" style="background: none; border: none; color: white; cursor: pointer;">
+                            ⬅️ Вернуться к приложению
+                        </button>
+                    </div>
+                `;
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
