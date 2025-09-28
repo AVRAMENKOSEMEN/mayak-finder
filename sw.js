@@ -1,4 +1,3 @@
-// Service Worker для полной оффлайн работы - ПОЛНАЯ ВЕРСИЯ
 const CACHE_NAME = 'mayak-finder-offline-v4';
 const urlsToCache = [
   './',
@@ -9,10 +8,8 @@ const urlsToCache = [
   './style.css',
   './script.js',
   './manifest.json',
-  
-  // ВАЖНО: добавляем все наши скрипты
   './settings.js',
-  './voice-guidance.js', 
+  './voice-guidance.js',
   './history-manager.js',
   './notifications.js',
   './offline-maps.js'
@@ -126,3 +123,4 @@ self.addEventListener('fetch', function(event) {
       })
   );
 });
+
