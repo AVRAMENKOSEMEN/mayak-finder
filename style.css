@@ -52,6 +52,7 @@ body {
 .app-header h1 {
     margin: 0;
     color: var(--text-color);
+    font-size: 24px;
 }
 
 .btn-icon {
@@ -150,6 +151,7 @@ label {
     border-radius: 5px;
     margin-top: 5px;
     word-break: break-all;
+    font-size: 14px;
 }
 
 .map {
@@ -158,17 +160,20 @@ label {
     border-radius: 5px;
     margin-top: 10px;
     overflow: hidden;
+    border: 2px solid var(--primary-color);
 }
 
 .map-placeholder {
     width: 100%;
     height: 100%;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
     color: var(--text-color);
     opacity: 0.7;
+    padding: 20px;
 }
 
 .map-icon {
@@ -178,15 +183,18 @@ label {
 
 .map-text {
     font-size: 14px;
+    line-height: 1.4;
 }
 
 .stats {
     display: flex;
     justify-content: space-between;
+    align-items: center;
 }
 
 .stat-item {
     text-align: center;
+    flex: 1;
 }
 
 .stat-label {
@@ -196,8 +204,14 @@ label {
     margin-bottom: 5px;
 }
 
+.stat-value {
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
 #dataLog {
-    max-height: 100px;
+    max-height: 120px;
     overflow-y: auto;
     font-family: monospace;
     font-size: 12px;
@@ -205,6 +219,17 @@ label {
     padding: 10px;
     border-radius: 5px;
     margin-top: 5px;
+    line-height: 1.4;
+}
+
+#dataLog div {
+    margin-bottom: 4px;
+    padding: 2px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+#dataLog div:last-child {
+    border-bottom: none;
 }
 
 .actions {
@@ -236,6 +261,18 @@ label {
     max-height: 80vh;
     overflow-y: auto;
     box-shadow: var(--shadow);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .modal-header {
@@ -244,11 +281,15 @@ label {
     align-items: center;
     padding: 20px;
     border-bottom: 1px solid var(--border-color);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    border-radius: 15px 15px 0 0;
 }
 
 .modal-header h2 {
     margin: 0;
-    color: var(--text-color);
+    color: white;
+    font-size: 20px;
 }
 
 .close-modal {
@@ -256,7 +297,18 @@ label {
     border: none;
     font-size: 24px;
     cursor: pointer;
-    color: var(--text-color);
+    color: white;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.3s ease;
+}
+
+.close-modal:hover {
+    background: rgba(255,255,255,0.2);
 }
 
 .modal-body {
@@ -265,15 +317,31 @@ label {
 
 /* Настройки */
 .setting-group {
-    margin-bottom: 20px;
+    margin-bottom: 25px;
+}
+
+.setting-group h3 {
+    margin-bottom: 15px;
+    color: var(--primary-color);
+    font-size: 18px;
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 5px;
 }
 
 .setting-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 0;
+    padding: 12px 0;
     border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.3s ease;
+}
+
+.setting-item:hover {
+    background: rgba(0,0,0,0.03);
+    border-radius: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
 .setting-item:last-child {
@@ -282,6 +350,7 @@ label {
 
 .setting-label {
     flex: 1;
+    font-size: 14px;
 }
 
 .setting-control {
@@ -326,7 +395,7 @@ label {
 }
 
 input:checked + .slider {
-    background: var(--primary-color);
+    background: var(--success-color);
 }
 
 input:checked + .slider:before {
@@ -337,43 +406,58 @@ input:checked + .slider:before {
 .history-actions {
     display: flex;
     gap: 10px;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     flex-wrap: wrap;
 }
 
 .history-list {
-    max-height: 300px;
+    max-height: 400px;
     overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px;
 }
 
 .history-item {
-    padding: 10px;
+    padding: 12px;
     border: 1px solid var(--border-color);
-    border-radius: 5px;
+    border-radius: 8px;
     margin-bottom: 10px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: all 0.3s ease;
+    background: var(--bg-color);
 }
 
 .history-item:hover {
     background: rgba(0,0,0,0.05);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-color: var(--primary-color);
+}
+
+.history-item:last-child {
+    margin-bottom: 0;
 }
 
 .history-coords {
     font-family: monospace;
     font-size: 12px;
     color: #666;
+    margin: 4px 0;
 }
 
 .history-time {
-    font-size: 12px;
+    font-size: 11px;
     color: #999;
+    font-style: italic;
 }
 
 .setting-actions {
     display: flex;
     gap: 10px;
-    margin-top: 20px;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
 }
 
 .setting-actions .btn {
@@ -381,6 +465,105 @@ input:checked + .slider:before {
     flex: 1;
 }
 
+/* Стили для выбора карт */
+.maps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 15px 0;
+}
+
+.map-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: var(--bg-color);
+}
+
+.map-item:hover {
+    background: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border-color: var(--primary-color);
+}
+
+.map-icon {
+    font-size: 24px;
+    margin-right: 15px;
+    width: 30px;
+    text-align: center;
+}
+
+.map-name {
+    font-weight: 500;
+    font-size: 16px;
+}
+
+/* Стили для маркеров карты */
+.target-marker, .user-marker {
+    text-align: center;
+    line-height: 1;
+    background: none !important;
+    border: none !important;
+}
+
+.target-marker {
+    font-size: 24px;
+    animation: pulse 2s infinite;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.user-marker {
+    font-size: 20px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Стили для Leaflet карты */
+.leaflet-container {
+    background: #f8f9fa;
+    font-family: inherit;
+    border-radius: 5px;
+}
+
+.leaflet-popup-content {
+    font-family: inherit;
+    font-size: 14px;
+}
+
+.leaflet-popup-content-wrapper {
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+/* Стили для select элементов */
+select {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background: var(--bg-color);
+    color: var(--text-color);
+    font-size: 14px;
+    min-width: 120px;
+    cursor: pointer;
+}
+
+select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+/* Адаптивность */
 @media (max-width: 480px) {
     body {
         padding: 10px;
@@ -388,6 +571,7 @@ input:checked + .slider:before {
     
     .container {
         padding: 15px;
+        border-radius: 12px;
     }
     
     .btn {
@@ -407,11 +591,128 @@ input:checked + .slider:before {
     .modal-content {
         margin: 10% auto;
         width: 95%;
+        border-radius: 12px;
+    }
+    
+    .modal-header {
+        padding: 15px;
+        border-radius: 12px 12px 0 0;
+    }
+    
+    .modal-body {
+        padding: 15px;
     }
     
     .history-actions {
         flex-direction: column;
     }
+    
+    .history-actions .btn {
+        margin-bottom: 5px;
+    }
+    
+    .setting-actions {
+        flex-direction: column;
+    }
+    
+    .stats {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .stat-item {
+        flex: none;
+    }
+    
+    .app-header h1 {
+        font-size: 20px;
+    }
+    
+    .map-item {
+        padding: 12px;
+    }
+    
+    .map-icon {
+        font-size: 20px;
+        margin-right: 12px;
+    }
+    
+    .map-name {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 360px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .coordinates, .map-preview, .log, .stats {
+        padding: 10px;
+        margin: 10px 0;
+    }
+    
+    .btn {
+        font-size: 13px;
+        padding: 8px;
+    }
+    
+    .modal-content {
+        margin: 5% auto;
+    }
+}
+
+/* Специфические стили для состояний */
+.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.success-message {
+    background: var(--success-color);
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+    margin: 10px 0;
+}
+
+.error-message {
+    background: var(--danger-color);
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+    margin: 10px 0;
+}
+
+.warning-message {
+    background: var(--warning-color);
+    color: #212529;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+    margin: 10px 0;
+}
+
+/* Стили для скроллбара */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.1);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary-color);
 }
 
 /* Анимации */
@@ -420,71 +721,107 @@ input:checked + .slider:before {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { 
+        opacity: 0; 
+        transform: translateY(-10px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
 }
 
-select {
-    padding: 8px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 5px;
-    background: var(--bg-color);
-    color: var(--text-color);
+.slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from { 
+        opacity: 0; 
+        transform: translateX(-20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateX(0); 
+    }
+}
+
+/* Стили для иконок статуса */
+.status::before {
+    margin-right: 8px;
     font-size: 14px;
 }
-/* Добавьте в конец файла style.css */
 
-.target-marker {
-    font-size: 24px;
-    text-align: center;
-    animation: pulse 2s infinite;
+/* Улучшенные стили для лога */
+#dataLog::-webkit-scrollbar {
+    width: 4px;
 }
 
-.user-location-marker {
-    font-size: 20px;
-    text-align: center;
+#dataLog::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.05);
 }
 
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
+#dataLog::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.2);
+    border-radius: 2px;
 }
 
-.leaflet-container {
-    background: #f8f9fa;
-}
-/* Добавьте в конец style.css */
-.target-marker, .user-marker {
-    text-align: center;
-    line-height: 1;
-    background: none;
-    border: none;
+/* Стили для темной темы улучшения */
+[data-theme="dark"] .btn {
+    color: white;
 }
 
-.target-marker {
-    font-size: 24px;
-    animation: pulse 2s infinite;
+[data-theme="dark"] .map-item:hover {
+    background: #4a5568;
 }
 
-.user-marker {
-    font-size: 20px;
+[data-theme="dark"] .history-item:hover {
+    background: #4a5568;
 }
 
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
+[data-theme="dark"] .setting-item:hover {
+    background: #4a5568;
 }
 
-/* Стили для кнопок карт */
-.map-buttons {
-    display: flex;
-    gap: 10px;
-    margin: 10px 0;
+[data-theme="dark"] #coordinatesText {
+    background: rgba(255,255,255,0.1);
+    color: #f8f9fa;
 }
 
-.map-buttons .btn {
-    flex: 1;
-    margin-bottom: 0;
+[data-theme="dark"] #dataLog {
+    background: rgba(255,255,255,0.1);
+    color: #f8f9fa;
+}
+
+[data-theme="dark"] .map-placeholder {
+    color: #f8f9fa;
+    opacity: 0.8;
+}
+
+/* Стили для улучшенной доступности */
+.btn:focus, .btn-icon:focus, .close-modal:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+select:focus, .switch input:focus + .slider {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Стили для печати */
+@media print {
+    .btn, .btn-icon, .light-controls {
+        display: none !important;
+    }
+    
+    .container {
+        box-shadow: none;
+        background: white;
+        color: black;
+    }
+    
+    .map {
+        height: 300px;
+    }
 }
