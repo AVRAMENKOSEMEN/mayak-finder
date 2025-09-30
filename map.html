@@ -5,139 +5,160 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Карта маяка - Mayak Finder</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: Arial, sans-serif; 
-            height: 100vh; 
-            display: flex; 
-            flex-direction: column;
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #f0f2f5;
         }
-        .header { 
+        
+        .map-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white; 
-            padding: 15px; 
-            display: flex; 
-            justify-content: space-between; 
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
-        .back-btn { 
-            background: rgba(255,255,255,0.2); 
-            border: none; 
-            color: white; 
-            padding: 10px 15px; 
-            border-radius: 5px; 
+        
+        .map-header h1 {
+            margin: 0;
+            font-size: 20px;
+        }
+        
+        .back-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
             cursor: pointer;
-            font-size: 16px;
-        }
-        .controls { 
-            background: white; 
-            padding: 12px 15px; 
-            display: flex; 
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #ddd;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .coordinates { 
-            font-family: monospace;
             font-size: 14px;
-            text-align: center;
         }
-        .stats {
-            display: flex;
-            gap: 20px;
-            font-size: 12px;
-            color: #666;
+        
+        .map-container-full {
+            height: calc(100vh - 60px);
+            width: 100%;
         }
-        .map-container { 
-            flex: 1; 
-            width: 100%; 
-            position: relative;
-        }
-        #mainMap { 
-            width: 100%; 
-            height: 100%; 
-        }
-        .control-panel {
+        
+        .map-controls {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 80px;
+            right: 20px;
             z-index: 1000;
             background: white;
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             min-width: 200px;
         }
-        .stat-item {
-            margin: 5px 0;
-            display: flex;
-            justify-content: space-between;
+        
+        .coordinates-info {
+            background: white;
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            z-index: 1000;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            font-family: monospace;
+            font-size: 12px;
+            max-width: 250px;
         }
+        
+        .navigation-panel {
+            background: white;
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 1000;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
         .stat-value {
+            font-size: 18px;
             font-weight: bold;
             color: #667eea;
         }
-        .navigation-info {
-            background: rgba(255,255,255,0.9);
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 10px;
-            border-left: 4px solid #28a745;
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
         }
+        
         .compass {
             text-align: center;
-            font-size: 24px;
-            margin: 5px 0;
+            font-size: 32px;
+            margin: 10px 0;
+            transition: transform 0.3s;
+        }
+        
+        .navigation-status {
+            text-align: center;
+            padding: 10px;
+            background: #e7f3ff;
+            border-radius: 5px;
+            margin-top: 10px;
+            border-left: 4px solid #1890ff;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <button class="back-btn" onclick="goBack()">← Назад</button>
-        <h2>🗺️ Карта маяка</h2>
+    <div class="map-header">
+        <button class="back-btn" onclick="window.location.href='index.html'">← Назад</button>
+        <h1>🗺️ Карта маяка</h1>
         <div style="width: 80px;"></div>
     </div>
     
-    <div class="controls">
-        <div class="coordinates" id="coordinates">
-            Загрузка координат...
-        </div>
-        <div class="stats">
-            <span>Точность: <span id="accuracy">--</span>м</span>
-            <span>Скорость: <span id="speed">--</span>км/ч</span>
-        </div>
+    <div id="map" class="map-container-full"></div>
+    
+    <div class="coordinates-info">
+        <strong>🎯 Координаты маяка:</strong><br>
+        <span id="targetCoords">Загрузка...</span>
     </div>
     
-    <div class="map-container">
-        <div id="mainMap"></div>
-        
-        <div class="control-panel">
-            <h4>📊 Навигация</h4>
-            <div class="stat-item">
-                <span>Расстояние:</span>
-                <span id="distance" class="stat-value">-- км</span>
+    <div class="map-controls">
+        <strong>📍 Ваше положение:</strong><br>
+        <span id="userCoords">--</span><br>
+        <span id="accuracy">Точность: -- м</span><br>
+        <span id="speed">Скорость: -- км/ч</span>
+    </div>
+    
+    <div class="navigation-panel">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="distance">-- км</div>
+                <div class="stat-label">Расстояние</div>
             </div>
-            <div class="stat-item">
-                <span>Направление:</span>
-                <span id="direction" class="stat-value">--</span>
+            <div class="stat-card">
+                <div class="stat-value" id="direction">--</div>
+                <div class="stat-label">Направление</div>
             </div>
-            <div class="compass" id="compass">↑</div>
-            <div class="stat-item">
-                <span>Время до цели:</span>
-                <span id="eta" class="stat-value">--</span>
-            </div>
-            
-            <div class="navigation-info">
-                <div id="navigationStatus">Ожидание GPS...</div>
-            </div>
-            
-            <button onclick="centerOnUser()" style="width: 100%; margin-top: 10px; padding: 8px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                📍 Центрировать на мне
-            </button>
+        </div>
+        <div class="compass" id="compass">↑</div>
+        <div class="navigation-status" id="navigationStatus">
+            Ожидание GPS...
         </div>
     </div>
 
@@ -146,34 +167,29 @@
         let targetLat, targetLon;
         let map, targetMarker, userMarker, accuracyCircle, trackLine;
         let userLat, userLon, userAccuracy, userSpeed;
-        let isTracking = false;
-        let watchId = null;
         let trackPoints = [];
+        let watchId = null;
 
         function init() {
-            // Получаем координаты из URL
             const urlParams = new URLSearchParams(window.location.search);
             targetLat = parseFloat(urlParams.get('lat')) || 55.241867;
             targetLon = parseFloat(urlParams.get('lon')) || 72.908588;
             
-            document.getElementById('coordinates').textContent = 
-                `Маяк: Ш ${targetLat.toFixed(6)}, Д ${targetLon.toFixed(6)}`;
+            document.getElementById('targetCoords').textContent = 
+                `Ш: ${targetLat.toFixed(6)}\nД: ${targetLon.toFixed(6)}`;
             
             initMap();
-            startTracking();
+            startUserTracking();
         }
 
         function initMap() {
-            // Создаем карту
-            map = L.map('mainMap').setView([targetLat, targetLon], 15);
+            map = L.map('map').setView([targetLat, targetLon], 15);
             
-            // Добавляем слой OpenStreetMap
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap',
                 maxZoom: 19
             }).addTo(map);
             
-            // Маркер цели (маяка)
             targetMarker = L.marker([targetLat, targetLon], {
                 icon: L.divIcon({
                     html: '🎯',
@@ -186,16 +202,15 @@
                 Долгота: ${targetLon.toFixed(6)}
             `).openPopup();
             
-            // Круг вокруг цели
             L.circle([targetLat, targetLon], {
                 color: 'red',
                 fillColor: '#f03',
                 fillOpacity: 0.1,
                 radius: 100
-            }).addTo(map).bindPopup('Зона маяка');
+            }).addTo(map);
         }
 
-        function startTracking() {
+        function startUserTracking() {
             if (!navigator.geolocation) {
                 updateNavigationStatus('❌ Геолокация не поддерживается');
                 return;
@@ -210,7 +225,6 @@
                     userAccuracy = position.coords.accuracy;
                     userSpeed = position.coords.speed || 0;
                     
-                    isTracking = true;
                     updateUserPosition();
                     updateNavigationInfo();
                 },
@@ -226,7 +240,11 @@
         }
 
         function updateUserPosition() {
-            // Обновляем маркер пользователя
+            document.getElementById('userCoords').textContent = 
+                `Ш: ${userLat.toFixed(6)}\nД: ${userLon.toFixed(6)}`;
+            document.getElementById('accuracy').textContent = `Точность: ${Math.round(userAccuracy)} м`;
+            document.getElementById('speed').textContent = `Скорость: ${(userSpeed * 3.6).toFixed(1)} км/ч`;
+            
             if (userMarker) {
                 userMarker.setLatLng([userLat, userLon]);
             } else {
@@ -239,7 +257,6 @@
                 }).addTo(map).bindPopup('📍 Ваше положение');
             }
             
-            // Обновляем круг точности
             if (accuracyCircle) {
                 map.removeLayer(accuracyCircle);
             }
@@ -250,12 +267,10 @@
                 radius: userAccuracy
             }).addTo(map);
             
-            // Добавляем точку в трек
             trackPoints.push([userLat, userLon]);
             updateTrack();
             
-            // Центрируем карту
-            centerOnUser();
+            map.setView([userLat, userLon], Math.max(map.getZoom(), 15));
         }
 
         function updateTrack() {
@@ -268,40 +283,20 @@
             trackLine = L.polyline(trackPoints, {
                 color: 'blue',
                 weight: 4,
-                opacity: 0.6,
-                smoothFactor: 1
+                opacity: 0.6
             }).addTo(map);
         }
 
         function updateNavigationInfo() {
-            if (!userLat || !userLon) return;
-            
             const distance = calculateDistance(userLat, userLon, targetLat, targetLon);
             const bearing = calculateBearing(userLat, userLon, targetLat, targetLon);
             const direction = getDirectionText(bearing);
             
-            // Обновляем интерфейс
             document.getElementById('distance').textContent = distance.toFixed(2) + ' км';
             document.getElementById('direction').textContent = direction;
-            document.getElementById('accuracy').textContent = Math.round(userAccuracy);
-            document.getElementById('speed').textContent = (userSpeed * 3.6).toFixed(1);
             
-            // Обновляем компас
             updateCompass(bearing);
             
-            // Расчет времени прибытия
-            if (userSpeed > 0) {
-                const etaHours = distance / (userSpeed * 3.6);
-                if (etaHours < 1) {
-                    document.getElementById('eta').textContent = Math.round(etaHours * 60) + ' мин';
-                } else {
-                    document.getElementById('eta').textContent = etaHours.toFixed(1) + ' ч';
-                }
-            } else {
-                document.getElementById('eta').textContent = '--';
-            }
-            
-            // Статус навигации
             if (distance < 0.05) {
                 updateNavigationStatus('🎯 Вы прибыли! Маяк рядом');
             } else if (distance < 0.1) {
@@ -316,14 +311,10 @@
         function updateCompass(bearing) {
             const compass = document.getElementById('compass');
             compass.style.transform = `rotate(${bearing}deg)`;
-            
-            const directions = ['С', 'СВ', 'В', 'ЮВ', 'Ю', 'ЮЗ', 'З', 'СЗ'];
-            const index = Math.round(bearing / 45) % 8;
-            compass.title = directions[index];
         }
 
         function getDirectionText(bearing) {
-            const directions = ['Север', 'Северо-Восток', 'Восток', 'Юго-Восток', 'Юг', 'Юго-Запад', 'Запад', 'Северо-Запад'];
+            const directions = ['С', 'СВ', 'В', 'ЮВ', 'Ю', 'ЮЗ', 'З', 'СЗ'];
             const index = Math.round(bearing / 45) % 8;
             return directions[index];
         }
@@ -351,12 +342,6 @@
             return (θ * 180 / Math.PI + 360) % 360;
         }
 
-        function centerOnUser() {
-            if (userLat && userLon) {
-                map.setView([userLat, userLon], Math.max(map.getZoom(), 15));
-            }
-        }
-
         function updateNavigationStatus(message) {
             document.getElementById('navigationStatus').textContent = message;
         }
@@ -377,37 +362,6 @@
             }
         }
 
-        function goBack() {
-            if (window.history.length > 1) {
-                window.history.back();
-            } else {
-                window.close();
-            }
-        }
-
-        // Стили для маркеров
-        const style = document.createElement('style');
-        style.textContent = `
-            .target-marker, .user-marker {
-                text-align: center;
-                line-height: 1;
-            }
-            .target-marker {
-                font-size: 30px;
-                animation: pulse 2s infinite;
-            }
-            .user-marker {
-                font-size: 24px;
-            }
-            @keyframes pulse {
-                0% { transform: scale(1); }
-                50% { transform: scale(1.1); }
-                100% { transform: scale(1); }
-            }
-        `;
-        document.head.appendChild(style);
-
-        // Инициализация
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
