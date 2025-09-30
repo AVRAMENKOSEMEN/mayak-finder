@@ -16,19 +16,39 @@ class MayakFinder {
         this.bindEvents();
         this.initMiniMap();
         this.updateCoordinatesCount();
-        this.startUserLocationTracking(); // Следим за местоположением пользователя
+        this.startUserLocationTracking();
+        
+        // Проверяем, не находимся ли мы на странице карты
+        this.checkIfOnMapPage();
+    }
+
+    checkIfOnMapPage() {
+        // Если мы на странице map.html, показываем кнопку "Назад"
+        if (window.location.pathname.includes('map.html') || document.querySelector('.map-container-full')) {
+            this.showBackButton();
+        }
+    }
+
+    showBackButton() {
+        const backBtn = document.createElement('button');
+        backBtn.className = 'btn secondary';
+        backBtn.innerHTML = '← Назад к приложению';
+        backBtn.style.margin = '10px';
+        backBtn.onclick = () => window.location.href = 'index.html';
+        
+        document.body.insertBefore(backBtn, document.body.firstChild);
     }
 
     bindEvents() {
-        document.getElementById('connectBtn').addEventListener('click', () => this.connectBluetooth());
-        document.getElementById('copyBtn').addEventListener('click', () => this.copyCoordinates());
-        document.getElementById('openMapBtn').addEventListener('click', () => this.openMap());
-        document.getElementById('openExternalMapsBtn').addEventListener('click', () => this.openExternalMaps());
-        document.getElementById('testBtn').addEventListener('click', () => this.useTestData());
-        document.getElementById('lightOnBtn').addEventListener('click', () => this.controlLight(true));
-        document.getElementById('lightOffBtn').addEventListener('click', () => this.controlLight(false));
-        document.getElementById('settingsBtn').addEventListener('click', () => this.showSettings());
-        document.getElementById('historyBtn').addEventListener('click', () => this.showHistory());
+        document.getElementById('connectBtn')?.addEventListener('click', () => this.connectBluetooth());
+        document.getElementById('copyBtn')?.addEventListener('click', () => this.copyCoordinates());
+        document.getElementById('openMapBtn')?.addEventListener('click', () => this.openMap());
+        document.getElementById('openExternalMapsBtn')?.addEventListener('click', () => this.openExternalMaps());
+        document.getElementById('testBtn')?.addEventListener('click', () => this.useTestData());
+        document.getElementById('lightOnBtn')?.addEventListener('click', () => this.controlLight(true));
+        document.getElementById('lightOffBtn')?.addEventListener('click', () => this.controlLight(false));
+        document.getElementById('settingsBtn')?.addEventListener('click', () => this.showSettings());
+        document.getElementById('historyBtn')?.addEventListener('click', () => this.showHistory());
 
         document.querySelectorAll('.close-modal').forEach(btn => {
             btn.addEventListener('click', (e) => this.closeModal(e.target.closest('.modal')));
@@ -53,7 +73,6 @@ class MayakFinder {
                 maxZoom: 18
             }).addTo(this.map);
 
-            // Начальный маркер маяка
             L.marker([55.241867, 72.908588])
                 .addTo(this.map)
                 .bindPopup('📍 Ожидание данных маяка')
@@ -64,7 +83,6 @@ class MayakFinder {
         }
     }
 
-    // Слежение за местоположением пользователя для мини-карты
     startUserLocationTracking() {
         if (!navigator.geolocation) {
             this.log('❌ Геолокация не поддерживается');
@@ -91,12 +109,10 @@ class MayakFinder {
     updateUserPositionOnMiniMap(lat, lon) {
         if (!this.map) return;
 
-        // Удаляем старый маркер пользователя
         if (this.userMarker) {
             this.map.removeLayer(this.userMarker);
         }
 
-        // Добавляем новый маркер пользователя
         this.userMarker = L.marker([lat, lon], {
             icon: L.divIcon({
                 html: '🧭',
@@ -105,114 +121,7 @@ class MayakFinder {
             })
         }).addTo(this.map).bindPopup('📍 Ваше местоположение');
 
-        // Центрируем карту между маяком и пользователем, если есть координаты маяка
         if (this.latitude && this.longitude) {
-            const group = L.featureGroup([this.userMarker, this.map.getLayers().find(layer => layer instanceof L.Marker && layer !== this.userMarker)]);
-            this.map.fitBounds(group.getBounds().pad(0.1));
-        }
-    }
-
-    async connectBluetooth() {
-        try {
-            this.log('🔵 Поиск Bluetooth устройств...');
-            
-            if (!navigator.bluetooth) {
-                throw new Error('Bluetooth не поддерживается вашим браузером');
-            }
-
-            this.device = await navigator.bluetooth.requestDevice({
-                filters: [{ namePrefix: 'Mayak' }],
-                optionalServices: ['battery_service', 'device_information']
-            });
-
-            this.log('📱 Устройство найдено: ' + this.device.name);
-            
-            this.device.addEventListener('gattserverdisconnected', () => {
-                this.onDisconnected();
-            });
-
-            const server = await this.device.gatt.connect();
-            this.log('✅ Подключено к GATT серверу');
-
-            await this.setupBluetoothServices(server);
-            
-            this.isConnected = true;
-            this.updateConnectionStatus(true);
-
-        } catch (error) {
-            this.log('❌ Ошибка подключения: ' + error.message);
-            this.updateConnectionStatus(false);
-        }
-    }
-
-    async setupBluetoothServices(server) {
-        try {
-            // Эмуляция получения данных для тестирования
-            this.log('📡 Ожидание данных от маяка...');
-            
-            // Имитируем получение данных каждые 5 секунд
-            setInterval(() => {
-                if (this.isConnected) {
-                    const testLat = 55.241867 + (Math.random() - 0.5) * 0.001;
-                    const testLon = 72.908588 + (Math.random() - 0.5) * 0.001;
-                    this.handleReceivedData(testLat, testLon);
-                }
-            }, 5000);
-
-        } catch (error) {
-            this.log('⚠️ Не удалось настроить сервисы: ' + error.message);
-        }
-    }
-
-    handleReceivedData(lat, lon) {
-        this.updateCoordinates(lat, lon);
-        this.coordinatesCount++;
-        this.updateCoordinatesCount();
-        
-        if (window.coordinatesHistory) {
-            window.coordinatesHistory.addEntry(lat, lon, Date.now(), 'Маяк');
-        }
-    }
-
-    updateCoordinates(lat, lon) {
-        this.latitude = lat;
-        this.longitude = lon;
-        
-        const coordsText = `Ш: ${lat.toFixed(6)}, Д: ${lon.toFixed(6)}`;
-        document.getElementById('coordinatesText').textContent = coordsText;
-        
-        // Активируем кнопки
-        document.getElementById('copyBtn').disabled = false;
-        document.getElementById('openMapBtn').disabled = false;
-        document.getElementById('openExternalMapsBtn').disabled = false;
-        document.getElementById('lightOnBtn').disabled = false;
-        document.getElementById('lightOffBtn').disabled = false;
-        
-        this.log('📍 Новые координаты: ' + coordsText);
-        this.updateMiniMap(lat, lon);
-    }
-
-    updateMiniMap(lat, lon) {
-        if (!this.map) return;
-
-        // Удаляем старые маркеры маяка (кроме маркера пользователя)
-        this.map.eachLayer(layer => {
-            if (layer instanceof L.Marker && layer !== this.userMarker) {
-                this.map.removeLayer(layer);
-            }
-        });
-
-        // Добавляем новый маркер маяка
-        L.marker([lat, lon], {
-            icon: L.divIcon({
-                html: '🎯',
-                iconSize: [30, 30],
-                className: 'target-marker'
-            })
-        }).addTo(this.map).bindPopup(`🎯 Маяк<br>Ш: ${lat.toFixed(6)}<br>Д: ${lon.toFixed(6)}`);
-
-        // Центрируем карту между маяком и пользователем
-        if (this.userMarker) {
             const targetMarker = this.map.getLayers().find(layer => layer instanceof L.Marker && layer !== this.userMarker);
             if (targetMarker) {
                 const group = L.featureGroup([this.userMarker, targetMarker]);
@@ -221,40 +130,19 @@ class MayakFinder {
         }
     }
 
-    // ИСПРАВЛЕННЫЙ МЕТОД - открытие карты
+    // ИСПРАВЛЕННЫЙ МЕТОД - открываем карту в этой же вкладке
     openMap() {
         if (this.latitude && this.longitude) {
-            const mapUrl = `map.html?lat=${this.latitude}&lon=${this.longitude}`;
-            
-            // Открываем в новом окне с правильными параметрами
-            const windowFeatures = 'width=800,height=700,scrollbars=yes,resizable=yes';
-            const newWindow = window.open(mapUrl, 'MapWindow', windowFeatures);
-            
-            if (newWindow) {
-                this.log('🗺️ Карта открыта в новом окне');
-                // Фокусируем новое окно
-                setTimeout(() => {
-                    if (newWindow && !newWindow.closed) {
-                        newWindow.focus();
-                    } else {
-                        // Если окно закрыто браузером, открываем в этой же вкладке
-                        window.location.href = mapUrl;
-                    }
-                }, 100);
-            } else {
-                // Если popup заблокирован, открываем в этой же вкладке
-                window.location.href = mapUrl;
-            }
+            // Просто переходим на страницу карты
+            window.location.href = `map.html?lat=${this.latitude}&lon=${this.longitude}`;
         } else {
             this.log('❌ Нет координат для отображения на карте');
             alert('Сначала получите координаты маяка (используйте тестовые данные или подключите Bluetooth)');
         }
     }
 
-    // НОВЫЙ МЕТОД - открытие в сторонних картах
     openExternalMaps() {
         if (this.latitude && this.longitude) {
-            // Создаем меню выбора карт
             this.showMapsSelection();
         } else {
             this.log('❌ Нет координат для открытия в картах');
@@ -291,7 +179,6 @@ class MayakFinder {
             }
         ];
 
-        // Создаем модальное окно выбора карт
         const modal = document.createElement('div');
         modal.className = 'modal';
         modal.style.display = 'block';
@@ -318,7 +205,6 @@ class MayakFinder {
             </div>
         `;
 
-        // Добавляем стили
         const styles = document.createElement('style');
         styles.textContent = `
             .maps-list {
@@ -366,14 +252,115 @@ class MayakFinder {
     }
 
     openInMap(url) {
-        // Открываем выбранное приложение карт
         window.open(url, '_blank');
         this.log('🌍 Открыто в сторонних картах');
         
-        // Закрываем модальное окно
         const modal = document.querySelector('.modal');
         if (modal) {
             document.body.removeChild(modal);
+        }
+    }
+
+    async connectBluetooth() {
+        try {
+            this.log('🔵 Поиск Bluetooth устройств...');
+            
+            if (!navigator.bluetooth) {
+                throw new Error('Bluetooth не поддерживается вашим браузером');
+            }
+
+            this.device = await navigator.bluetooth.requestDevice({
+                filters: [{ namePrefix: 'Mayak' }],
+                optionalServices: ['battery_service', 'device_information']
+            });
+
+            this.log('📱 Устройство найдено: ' + this.device.name);
+            
+            this.device.addEventListener('gattserverdisconnected', () => {
+                this.onDisconnected();
+            });
+
+            const server = await this.device.gatt.connect();
+            this.log('✅ Подключено к GATT серверу');
+
+            await this.setupBluetoothServices(server);
+            
+            this.isConnected = true;
+            this.updateConnectionStatus(true);
+
+        } catch (error) {
+            this.log('❌ Ошибка подключения: ' + error.message);
+            this.updateConnectionStatus(false);
+        }
+    }
+
+    async setupBluetoothServices(server) {
+        try {
+            this.log('📡 Ожидание данных от маяка...');
+            
+            setInterval(() => {
+                if (this.isConnected) {
+                    const testLat = 55.241867 + (Math.random() - 0.5) * 0.001;
+                    const testLon = 72.908588 + (Math.random() - 0.5) * 0.001;
+                    this.handleReceivedData(testLat, testLon);
+                }
+            }, 5000);
+
+        } catch (error) {
+            this.log('⚠️ Не удалось настроить сервисы: ' + error.message);
+        }
+    }
+
+    handleReceivedData(lat, lon) {
+        this.updateCoordinates(lat, lon);
+        this.coordinatesCount++;
+        this.updateCoordinatesCount();
+        
+        if (window.coordinatesHistory) {
+            window.coordinatesHistory.addEntry(lat, lon, Date.now(), 'Маяк');
+        }
+    }
+
+    updateCoordinates(lat, lon) {
+        this.latitude = lat;
+        this.longitude = lon;
+        
+        const coordsText = `Ш: ${lat.toFixed(6)}, Д: ${lon.toFixed(6)}`;
+        document.getElementById('coordinatesText').textContent = coordsText;
+        
+        document.getElementById('copyBtn').disabled = false;
+        document.getElementById('openMapBtn').disabled = false;
+        document.getElementById('openExternalMapsBtn').disabled = false;
+        document.getElementById('lightOnBtn').disabled = false;
+        document.getElementById('lightOffBtn').disabled = false;
+        
+        this.log('📍 Новые координаты: ' + coordsText);
+        this.updateMiniMap(lat, lon);
+    }
+
+    updateMiniMap(lat, lon) {
+        if (!this.map) return;
+
+        this.map.eachLayer(layer => {
+            if (layer instanceof L.Marker && layer !== this.userMarker) {
+                this.map.removeLayer(layer);
+            }
+        });
+
+        L.marker([lat, lon], {
+            icon: L.divIcon({
+                html: '🎯',
+                iconSize: [30, 30],
+                className: 'target-marker'
+            })
+        }).addTo(this.map).bindPopup(`🎯 Маяк<br>Ш: ${lat.toFixed(6)}<br>Д: ${lon.toFixed(6)}`);
+
+        if (this.userMarker) {
+            const targetMarker = this.map.getLayers().find(layer => layer instanceof L.Marker && layer !== this.userMarker);
+            if (targetMarker) {
+                const group = L.featureGroup([this.userMarker, targetMarker]);
+                this.map.fitBounds(group.getBounds().pad(0.1));
+            }
         }
     }
 
@@ -382,7 +369,6 @@ class MayakFinder {
         
         try {
             this.log(on ? '💡 Включение света...' : '🔌 Выключение света...');
-            // Здесь будет реальная команда BLE
             await new Promise(resolve => setTimeout(resolve, 1000));
             this.log(on ? '✅ Свет включен' : '✅ Свет выключен');
         } catch (error) {
@@ -610,10 +596,7 @@ class MayakFinder {
     }
 }
 
-// Глобальная переменная приложения
 let app;
-
-// Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
     app = new MayakFinder();
 });
