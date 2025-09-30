@@ -16,7 +16,7 @@ class MayakFinder {
         this.bindEvents();
         this.initMiniMap();
         this.updateCoordinatesCount();
-        this.startUserLocationTracking();
+        this.startUserLocationTracking(); // Следим за местоположением пользователя
     }
 
     bindEvents() {
@@ -46,14 +46,14 @@ class MayakFinder {
         if (!mapContainer || !L) return;
 
         try {
-            this.map = L.map('mapPreview').setView([55.241867, 72.908588], 3);
+            this.map = L.map('mapPreview').setView([55.241867, 72.908588], 10);
             
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap',
                 maxZoom: 18
             }).addTo(this.map);
 
-            // Добавляем начальный маркер маяка
+            // Начальный маркер маяка
             L.marker([55.241867, 72.908588])
                 .addTo(this.map)
                 .bindPopup('📍 Ожидание данных маяка')
@@ -64,6 +64,7 @@ class MayakFinder {
         }
     }
 
+    // Слежение за местоположением пользователя для мини-карты
     startUserLocationTracking() {
         if (!navigator.geolocation) {
             this.log('❌ Геолокация не поддерживается');
@@ -74,12 +75,10 @@ class MayakFinder {
             (position) => {
                 const lat = position.coords.latitude;
                 const lon = position.coords.longitude;
-                const accuracy = position.coords.accuracy;
-                
-                this.updateUserPositionOnMiniMap(lat, lon, accuracy);
+                this.updateUserPositionOnMiniMap(lat, lon);
             },
             (error) => {
-                this.log('⚠️ Не удалось получить местоположение: ' + error.message);
+                console.log('Ошибка геолокации:', error);
             },
             {
                 enableHighAccuracy: true,
@@ -89,7 +88,7 @@ class MayakFinder {
         );
     }
 
-    updateUserPositionOnMiniMap(lat, lon, accuracy) {
+    updateUserPositionOnMiniMap(lat, lon) {
         if (!this.map) return;
 
         // Удаляем старый маркер пользователя
@@ -97,27 +96,19 @@ class MayakFinder {
             this.map.removeLayer(this.userMarker);
         }
 
-        // Создаем новый маркер пользователя
+        // Добавляем новый маркер пользователя
         this.userMarker = L.marker([lat, lon], {
             icon: L.divIcon({
                 html: '🧭',
                 iconSize: [25, 25],
                 className: 'user-marker'
             })
-        }).addTo(this.map).bindPopup(`
-            <strong>📍 Ваше положение</strong><br>
-            Точность: ${Math.round(accuracy)}м<br>
-            Ш: ${lat.toFixed(6)}<br>
-            Д: ${lon.toFixed(6)}
-        `);
+        }).addTo(this.map).bindPopup('📍 Ваше местоположение');
 
-        // Если есть координаты маяка, центрируем карту между ними
+        // Центрируем карту между маяком и пользователем, если есть координаты маяка
         if (this.latitude && this.longitude) {
-            const group = new L.featureGroup([this.userMarker, this.map.getLayers().find(layer => layer instanceof L.Marker && layer !== this.userMarker)]);
+            const group = L.featureGroup([this.userMarker, this.map.getLayers().find(layer => layer instanceof L.Marker && layer !== this.userMarker)]);
             this.map.fitBounds(group.getBounds().pad(0.1));
-        } else {
-            // Иначе центрируем на пользователе
-            this.map.setView([lat, lon], 13);
         }
     }
 
@@ -156,6 +147,7 @@ class MayakFinder {
 
     async setupBluetoothServices(server) {
         try {
+            // Эмуляция получения данных для тестирования
             this.log('📡 Ожидание данных от маяка...');
             
             // Имитируем получение данных каждые 5 секунд
@@ -223,72 +215,165 @@ class MayakFinder {
         if (this.userMarker) {
             const targetMarker = this.map.getLayers().find(layer => layer instanceof L.Marker && layer !== this.userMarker);
             if (targetMarker) {
-                const group = new L.featureGroup([this.userMarker, targetMarker]);
+                const group = L.featureGroup([this.userMarker, targetMarker]);
                 this.map.fitBounds(group.getBounds().pad(0.1));
             }
-        } else {
-            this.map.setView([lat, lon], 15);
         }
     }
 
+    // ИСПРАВЛЕННЫЙ МЕТОД - открытие карты
     openMap() {
         if (this.latitude && this.longitude) {
             const mapUrl = `map.html?lat=${this.latitude}&lon=${this.longitude}`;
             
-            // Открываем в новом окне с правильным именем
-            const newWindow = window.open(mapUrl, 'MapWindow', 'width=800,height=600,scrollbars=yes,resizable=yes');
+            // Открываем в новом окне с правильными параметрами
+            const windowFeatures = 'width=800,height=700,scrollbars=yes,resizable=yes';
+            const newWindow = window.open(mapUrl, 'MapWindow', windowFeatures);
             
             if (newWindow) {
                 this.log('🗺️ Карта открыта в новом окне');
-                // Фокус на новое окно
+                // Фокусируем новое окно
                 setTimeout(() => {
                     if (newWindow && !newWindow.closed) {
                         newWindow.focus();
+                    } else {
+                        // Если окно закрыто браузером, открываем в этой же вкладке
+                        window.location.href = mapUrl;
                     }
                 }, 100);
             } else {
-                // Если popup заблокирован, показываем сообщение
-                this.log('❌ Браузер заблокировал открытие окна. Разрешите popup или используйте "Открыть в картах"');
-                alert('Браузер заблокировал открытие новой вкладки. Пожалуйста:\n1. Разрешите popup для этого сайта\n2. Или используйте кнопку "Открыть в картах"\n3. Или откройте ссылку вручную: ' + mapUrl);
+                // Если popup заблокирован, открываем в этой же вкладке
+                window.location.href = mapUrl;
             }
         } else {
             this.log('❌ Нет координат для отображения на карте');
+            alert('Сначала получите координаты маяка (используйте тестовые данные или подключите Bluetooth)');
+        }
+    }
+
+    // НОВЫЙ МЕТОД - открытие в сторонних картах
+    openExternalMaps() {
+        if (this.latitude && this.longitude) {
+            // Создаем меню выбора карт
+            this.showMapsSelection();
+        } else {
+            this.log('❌ Нет координат для открытия в картах');
             alert('Сначала получите координаты маяка');
         }
     }
 
-    openExternalMaps() {
-        if (this.latitude && this.longitude) {
-            // Пробуем разные варианты открытия во внешних картах
-            const urls = [
-                // Google Maps
-                `https://www.google.com/maps/search/?api=1&query=${this.latitude},${this.longitude}`,
-                // Яндекс Карты
-                `https://yandex.ru/maps/?text=${this.latitude},${this.longitude}`,
-                // OpenStreetMap
-                `https://www.openstreetmap.org/?mlat=${this.latitude}&mlon=${this.longitude}#map=15/${this.latitude}/${this.longitude}`,
-                // Универсальная geo ссылка
-                `geo:${this.latitude},${this.longitude}`
-            ];
+    showMapsSelection() {
+        const maps = [
+            {
+                name: 'Google Maps',
+                url: `https://www.google.com/maps/search/?api=1&query=${this.latitude},${this.longitude}`,
+                icon: '🗺️'
+            },
+            {
+                name: 'Яндекс Карты',
+                url: `https://yandex.ru/maps/?pt=${this.longitude},${this.latitude}&z=15`,
+                icon: '🌐'
+            },
+            {
+                name: '2GIS',
+                url: `https://2gis.ru/geo/${this.longitude},${this.latitude}`,
+                icon: '🏢'
+            },
+            {
+                name: 'Apple Карты',
+                url: `http://maps.apple.com/?q=${this.latitude},${this.longitude}`,
+                icon: '🍎'
+            },
+            {
+                name: 'Waze',
+                url: `https://www.waze.com/ul?ll=${this.latitude},${this.longitude}&navigate=yes`,
+                icon: '🚗'
+            }
+        ];
 
-            // Пробуем открыть в приложении через geo ссылку
-            const geoUrl = `geo:${this.latitude},${this.longitude}?q=${this.latitude},${this.longitude}(Маяк)`;
-            window.location.href = geoUrl;
-            
-            // Резервный вариант через 2 секунды
-            setTimeout(() => {
-                if (!document.hidden) {
-                    // Если geo ссылка не сработала, открываем веб-версию
-                    const webUrl = urls[0]; // Google Maps по умолчанию
-                    window.open(webUrl, '_blank');
-                    this.log('🗺️ Открываю во внешних картах: ' + webUrl);
-                }
-            }, 2000);
+        // Создаем модальное окно выбора карт
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'block';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>🌍 Открыть в картах</h2>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p style="margin-bottom: 15px;">Выберите приложение для навигации:</p>
+                    <div class="maps-list">
+                        ${maps.map(map => `
+                            <div class="map-item" onclick="app.openInMap('${map.url}')">
+                                <span class="map-icon">${map.icon}</span>
+                                <span class="map-name">${map.name}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
+                        <p style="font-size: 12px; color: #666;">Координаты: ${this.latitude.toFixed(6)}, ${this.longitude.toFixed(6)}</p>
+                    </div>
+                </div>
+            </div>
+        `;
 
-            this.log('📍 Отправляю координаты во внешние карты');
-        } else {
-            this.log('❌ Нет координат для отправки в карты');
-            alert('Сначала получите координаты маяка');
+        // Добавляем стили
+        const styles = document.createElement('style');
+        styles.textContent = `
+            .maps-list {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .map-item {
+                display: flex;
+                align-items: center;
+                padding: 12px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+            .map-item:hover {
+                background: #f8f9fa;
+                transform: translateY(-2px);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            .map-icon {
+                font-size: 20px;
+                margin-right: 10px;
+            }
+            .map-name {
+                font-weight: 500;
+            }
+        `;
+        document.head.appendChild(styles);
+
+        modal.querySelector('.close-modal').onclick = () => {
+            document.body.removeChild(modal);
+            document.head.removeChild(styles);
+        };
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+                document.head.removeChild(styles);
+            }
+        });
+
+        document.body.appendChild(modal);
+    }
+
+    openInMap(url) {
+        // Открываем выбранное приложение карт
+        window.open(url, '_blank');
+        this.log('🌍 Открыто в сторонних картах');
+        
+        // Закрываем модальное окно
+        const modal = document.querySelector('.modal');
+        if (modal) {
+            document.body.removeChild(modal);
         }
     }
 
@@ -297,6 +382,7 @@ class MayakFinder {
         
         try {
             this.log(on ? '💡 Включение света...' : '🔌 Выключение света...');
+            // Здесь будет реальная команда BLE
             await new Promise(resolve => setTimeout(resolve, 1000));
             this.log(on ? '✅ Свет включен' : '✅ Свет выключен');
         } catch (error) {
@@ -386,29 +472,29 @@ class MayakFinder {
             </div>
 
             <div class="setting-group">
-                <h3>🗺️ Карты по умолчанию</h3>
+                <h3>📏 Единицы измерения</h3>
                 <div class="setting-item">
-                    <div class="setting-label">Приложение карт</div>
-                    <select class="setting-control" id="defaultMapsSelect">
-                        <option value="internal">Встроенные карты</option>
-                        <option value="external">Внешние карты (Google/Yandex)</option>
+                    <div class="setting-label">Система единиц</div>
+                    <select class="setting-control" id="unitsSelect">
+                        <option value="metric">Метрическая (км/м)</option>
+                        <option value="imperial">Имперская (мили/футы)</option>
                     </select>
                 </div>
             </div>
 
             <div class="setting-group">
-                <h3>📍 Слежение за местоположением</h3>
+                <h3>🗺️ Карты</h3>
                 <div class="setting-item">
-                    <div class="setting-label">Показывать мое положение</div>
+                    <div class="setting-label">Показывать мое местоположение</div>
                     <label class="switch">
                         <input type="checkbox" id="showLocationToggle" checked>
                         <span class="slider"></span>
                     </label>
                 </div>
                 <div class="setting-item">
-                    <div class="setting-label">Высокая точность GPS</div>
+                    <div class="setting-label">Автоматическое слежение</div>
                     <label class="switch">
-                        <input type="checkbox" id="highAccuracyToggle" checked>
+                        <input type="checkbox" id="autoFollowToggle" checked>
                         <span class="slider"></span>
                     </label>
                 </div>
@@ -429,28 +515,22 @@ class MayakFinder {
 
         const settings = window.appSettings.settings;
         document.getElementById('themeSelect').value = settings.theme || 'auto';
-        document.getElementById('defaultMapsSelect').value = settings.defaultMaps || 'internal';
+        document.getElementById('unitsSelect').value = settings.units || 'metric';
         document.getElementById('showLocationToggle').checked = settings.showLocation !== false;
-        document.getElementById('highAccuracyToggle').checked = settings.highAccuracy !== false;
+        document.getElementById('autoFollowToggle').checked = settings.autoFollow !== false;
     }
 
     saveSettings() {
         if (!window.appSettings) return;
 
         window.appSettings.settings.theme = document.getElementById('themeSelect').value;
-        window.appSettings.settings.defaultMaps = document.getElementById('defaultMapsSelect').value;
+        window.appSettings.settings.units = document.getElementById('unitsSelect').value;
         window.appSettings.settings.showLocation = document.getElementById('showLocationToggle').checked;
-        window.appSettings.settings.highAccuracy = document.getElementById('highAccuracyToggle').checked;
+        window.appSettings.settings.autoFollow = document.getElementById('autoFollowToggle').checked;
 
         if (window.appSettings.saveSettings()) {
             this.log('✅ Настройки сохранены');
             this.closeModal(document.getElementById('settingsModal'));
-            
-            // Применяем настройки местоположения
-            if (!window.appSettings.settings.showLocation && this.userMarker) {
-                this.map.removeLayer(this.userMarker);
-                this.userMarker = null;
-            }
         }
     }
 
